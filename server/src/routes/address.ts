@@ -51,6 +51,16 @@ addressRouter.get(
         assetsRes.json(),
       ]);
 
+      // Log raw Koios payloads (may be large). Consider lowering LOG_LEVEL in production if too verbose.
+      try {
+        (req as Request & { log?: { info: (o: unknown, m?: string) => void } }).log?.info(
+          { infoRaw, utxosRawCount: Array.isArray(utxosRaw) ? utxosRaw.length : undefined, assetsRaw },
+          'Koios raw response',
+        );
+      } catch {
+        // ignore logging errors
+      }
+
       if (raw) {
         return res.json({ info: infoRaw, utxos: utxosRaw, assets: assetsRaw });
       }
