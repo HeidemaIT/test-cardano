@@ -7,6 +7,7 @@ import {
   Checkbox,
   Container,
   FormControlLabel,
+  Stack,
   Paper,
   Table,
   TableBody,
@@ -75,12 +76,17 @@ function App() {
   const maybeSummary = data as any;
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" gutterBottom>
         Cardano Address Assets
       </Typography>
 
-      <Box display="flex" gap={2} alignItems="center">
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={2}
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        sx={{ width: '100%' }}
+      >
         <TextField
           fullWidth
           label="Cardano address"
@@ -92,10 +98,15 @@ function App() {
           control={<Checkbox checked={raw} onChange={(e) => setRaw(e.target.checked)} />}
           label="Raw"
         />
-        <Button variant="contained" onClick={fetchAssets} disabled={loading || !address}>
+        <Button
+          variant="contained"
+          onClick={fetchAssets}
+          disabled={loading || !address}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
           {loading ? 'Loading...' : 'Fetch'}
         </Button>
-      </Box>
+      </Stack>
 
       {error && (
         <Alert severity="error" sx={{ mt: 2 }}>
@@ -131,21 +142,27 @@ function App() {
           )}
 
           {!raw && 'assets' in maybeSummary && Array.isArray(maybeSummary.assets) && (
-            <TableContainer component={Paper}>
+            <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>policy_id</TableCell>
-                    <TableCell>asset_name</TableCell>
-                    <TableCell>quantity</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>policy_id</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>asset_name</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>quantity</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {maybeSummary.assets.map((a: AssetSummary, idx: number) => (
                     <TableRow key={idx}>
-                      <TableCell>{String(a.policy_id ?? '')}</TableCell>
-                      <TableCell>{String(a.asset_name ?? '')}</TableCell>
-                      <TableCell>{String(a.quantity ?? '')}</TableCell>
+                      <TableCell sx={{ wordBreak: 'break-all' }}>
+                        {String(a.policy_id ?? '')}
+                      </TableCell>
+                      <TableCell sx={{ wordBreak: 'break-all' }}>
+                        {String(a.asset_name ?? '')}
+                      </TableCell>
+                      <TableCell sx={{ wordBreak: 'break-all' }}>
+                        {String(a.quantity ?? '')}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -154,21 +171,21 @@ function App() {
           )}
 
           {!raw && 'utxos' in maybeSummary && Array.isArray(maybeSummary.utxos) && (
-            <TableContainer component={Paper} sx={{ mt: 2 }}>
+            <TableContainer component={Paper} sx={{ mt: 2, overflowX: 'auto' }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>tx_hash</TableCell>
-                    <TableCell>tx_index</TableCell>
-                    <TableCell>value</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>tx_hash</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>tx_index</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>value</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {maybeSummary.utxos.map((u: any, idx: number) => (
                     <TableRow key={idx}>
-                      <TableCell>{String(u.tx_hash ?? '')}</TableCell>
-                      <TableCell>{String(u.tx_index ?? '')}</TableCell>
-                      <TableCell>{String(u.value ?? '')}</TableCell>
+                      <TableCell sx={{ wordBreak: 'break-all' }}>{String(u.tx_hash ?? '')}</TableCell>
+                      <TableCell sx={{ wordBreak: 'break-all' }}>{String(u.tx_index ?? '')}</TableCell>
+                      <TableCell sx={{ wordBreak: 'break-all' }}>{String(u.value ?? '')}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
