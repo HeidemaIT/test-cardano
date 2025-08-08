@@ -125,7 +125,7 @@ function App() {
         </Alert>
       )}
 
-      {data && (
+      {data ? (
         <Box mt={2}>
           {raw && (
             <Paper sx={{ p: 2 }}>
@@ -204,7 +204,7 @@ function App() {
             </TableContainer>
           )}
         </Box>
-      )}
+      ) : null}
     </Container>
   );
 }
