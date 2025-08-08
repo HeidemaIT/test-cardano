@@ -1,5 +1,20 @@
 import { useMemo, useState } from 'react';
 import './App.css';
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from '@mui/material';
 
 type AssetSummary = {
   policy_id?: string;
@@ -52,70 +67,73 @@ function App() {
   const maybeSummary = data as any;
 
   return (
-    <div style={{ maxWidth: 880, margin: '0 auto', padding: 24 }}>
-      <h1>Cardano Address Assets</h1>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input
-          style={{ flex: 1, padding: 8 }}
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Cardano Address Assets
+      </Typography>
+
+      <Box display="flex" gap={2}>
+        <TextField
+          fullWidth
+          label="Cardano address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder="Enter Cardano address (addr...)"
+          placeholder="addr..."
         />
-        <button onClick={fetchAssets} disabled={loading || !address}>
+        <Button variant="contained" onClick={fetchAssets} disabled={loading || !address}>
           {loading ? 'Loading...' : 'Fetch'}
-        </button>
-      </div>
+        </Button>
+      </Box>
 
       {error && (
-        <div style={{ marginTop: 12, color: 'crimson' }}>Error: {error}</div>
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
       )}
 
       {data && (
-        <div style={{ marginTop: 16 }}>
+        <Box mt={2}>
           {'address' in maybeSummary && (
-            <div style={{ marginBottom: 12 }}>
-              <div>
-                <strong>Address:</strong> {maybeSummary.address}
-              </div>
-              <div>
-                <strong>Assets count:</strong> {maybeSummary.assetsCount}
-              </div>
-              <div>
-                <strong>Provider:</strong> {maybeSummary.provider}
-              </div>
-              <div>
-                <strong>Fetched:</strong> {maybeSummary.fetchedAt}
-              </div>
-            </div>
+            <Paper sx={{ p: 2, mb: 2 }}>
+              <Typography variant="subtitle1">Summary</Typography>
+              <Typography variant="body2">Address: {maybeSummary.address}</Typography>
+              <Typography variant="body2">Assets count: {maybeSummary.assetsCount}</Typography>
+              <Typography variant="body2">Provider: {maybeSummary.provider}</Typography>
+              <Typography variant="body2">Fetched: {maybeSummary.fetchedAt}</Typography>
+            </Paper>
           )}
 
           {'assets' in maybeSummary && Array.isArray(maybeSummary.assets) && (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>policy_id</th>
-                  <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>asset_name</th>
-                  <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>quantity</th>
-                </tr>
-              </thead>
-              <tbody>
-                {maybeSummary.assets.map((a: AssetSummary, idx: number) => (
-                  <tr key={idx}>
-                    <td style={{ padding: '6px 4px' }}>{String(a.policy_id ?? '')}</td>
-                    <td style={{ padding: '6px 4px' }}>{String(a.asset_name ?? '')}</td>
-                    <td style={{ padding: '6px 4px' }}>{String(a.quantity ?? '')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <TableContainer component={Paper}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>policy_id</TableCell>
+                    <TableCell>asset_name</TableCell>
+                    <TableCell>quantity</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {maybeSummary.assets.map((a: AssetSummary, idx: number) => (
+                    <TableRow key={idx}>
+                      <TableCell>{String(a.policy_id ?? '')}</TableCell>
+                      <TableCell>{String(a.asset_name ?? '')}</TableCell>
+                      <TableCell>{String(a.quantity ?? '')}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
 
           {!('assets' in maybeSummary) && (
-            <pre style={{ marginTop: 12 }}>{JSON.stringify(data, null, 2)}</pre>
+            <Paper sx={{ p: 2, mt: 2 }}>
+              <pre style={{ margin: 0 }}>{JSON.stringify(data, null, 2)}</pre>
+            </Paper>
           )}
-        </div>
+        </Box>
       )}
-    </div>
+    </Container>
   );
 }
 
