@@ -71,7 +71,8 @@ app.use((_req, res) => {
 
 // Error handler
 import type { Request, Response, NextFunction } from 'express';
-app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
-  (req as any).log?.error({ err }, 'Unhandled error');
+type RequestWithLog = Request & { log?: { error: (obj: unknown, msg?: string) => void } };
+app.use((err: unknown, req: RequestWithLog, res: Response, _next: NextFunction) => {
+  req.log?.error({ err }, 'Unhandled error');
   res.status(500).json({ error: 'Internal Server Error' });
 });

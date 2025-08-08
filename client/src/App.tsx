@@ -41,7 +41,7 @@ type ApiResponse =
 
 function App() {
   const [address, setAddress] = useState(
-    'addr1q9872xmn7jqgnh4n2h9nr52v38a4mm2xvgeg9tq3nhrhan45hmjtmx580zvj4dcylkp6w2twlzekrk9apsreqah8glhsjeuc96',
+    'addr1q9d9p4k0q3yqf7xp9a9h5r0d7k6l0cnyy9n9r5f2w9c9vqd0gqf0a99u0q2',
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,8 @@ function App() {
   const [raw, setRaw] = useState(false);
 
   const apiBaseUrl = useMemo(() => {
-    return (import.meta as any).env.VITE_API_BASE_URL ?? 'http://localhost:3000';
+    return (import.meta as unknown as { env: { VITE_API_BASE_URL?: string } }).env
+      .VITE_API_BASE_URL ?? 'http://localhost:3000';
   }, []);
 
   async function fetchAssets() {
@@ -73,7 +74,17 @@ function App() {
     }
   }
 
-  const maybeSummary = data as any;
+  type Summary = {
+    address?: string;
+    provider?: string;
+    fetchedAt?: string;
+    assetsCount?: number;
+    utxosCount?: number;
+    info?: Record<string, unknown>;
+    assets?: AssetSummary[];
+    utxos?: Array<{ tx_hash?: string; tx_index?: number; value?: string | number }>;
+  };
+  const maybeSummary = data as Summary;
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -181,7 +192,7 @@ function App() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {maybeSummary.utxos.map((u: any, idx: number) => (
+                  {maybeSummary.utxos.map((u, idx: number) => (
                     <TableRow key={idx}>
                       <TableCell sx={{ wordBreak: 'break-all' }}>{String(u.tx_hash ?? '')}</TableCell>
                       <TableCell sx={{ wordBreak: 'break-all' }}>{String(u.tx_index ?? '')}</TableCell>

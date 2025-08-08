@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { z } from 'zod';
 import { validateParams } from '../middleware/validate';
 
@@ -57,20 +57,32 @@ addressRouter.get(
 
       const infoFirst = Array.isArray(infoRaw) ? infoRaw[0] : undefined;
       const assetsFirst = Array.isArray(assetsRaw) ? assetsRaw[0] : undefined;
-      const assets: unknown[] = Array.isArray(assetsFirst?.asset_list)
-        ? (assetsFirst.asset_list as unknown[])
+      type Asset = {
+        policy_id?: string;
+        asset_name?: string;
+        quantity?: string | number;
+        [k: string]: unknown;
+      };
+      type Utxo = {
+        tx_hash?: string;
+        tx_index?: number;
+        value?: string | number;
+        [k: string]: unknown;
+      };
+      const assets: Asset[] = Array.isArray(assetsFirst?.asset_list)
+        ? (assetsFirst.asset_list as Asset[])
         : Array.isArray(assetsRaw)
-          ? (assetsRaw as unknown[])
+          ? (assetsRaw as Asset[])
           : [];
-      const utxos: unknown[] = Array.isArray(utxosRaw) ? (utxosRaw as unknown[]) : [];
+      const utxos: Utxo[] = Array.isArray(utxosRaw) ? (utxosRaw as Utxo[]) : [];
 
       // Log a concise summary
       try {
-        (req as any).log?.info(
+        (req as Request & { log?: { info: (o: unknown, m?: string) => void } }).log?.info(
           { address: addr, assetsCount: assets.length, utxosCount: utxos.length },
           'Address data fetched from Koios',
         );
-      } catch (_) {
+      } catch {
         // ignore logging errors
       }
 
@@ -85,9 +97,11 @@ addressRouter.get(
         assets,
       });
     } catch (err) {
-      (req as any).log?.error({ err }, 'Failed to fetch assets from Koios');
+      (req as Request & { log?: { error: (o: unknown, m?: string) => void } }).log?.error(
+        { err },
+        'Failed to fetch assets from Koios',
+      );
       return res.status(500).json({ error: 'Failed to fetch assets' });
     }
   },
 );
-
