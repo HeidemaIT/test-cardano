@@ -4,7 +4,9 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Container,
+  FormControlLabel,
   Paper,
   Table,
   TableBody,
@@ -28,8 +30,11 @@ type ApiResponse =
       address: string;
       provider: string;
       fetchedAt: string;
+      info?: Record<string, unknown>;
       assetsCount: number;
+      utxosCount?: number;
       assets: AssetSummary[];
+      utxos?: Array<Record<string, unknown>>;
     }
   | unknown;
 
@@ -40,6 +45,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ApiResponse | null>(null);
+  const [raw, setRaw] = useState(false);
 
   const apiBaseUrl = useMemo(() => {
     return (import.meta as any).env.VITE_API_BASE_URL ?? 'http://localhost:3000';
@@ -50,7 +56,9 @@ function App() {
     setError(null);
     setData(null);
     try {
-      const res = await fetch(`${apiBaseUrl}/address/${address}/assets`);
+      const url = new URL(`${apiBaseUrl}/address/${address}/assets`);
+      if (raw) url.searchParams.set('raw', '1');
+      const res = await fetch(url.toString());
       if (!res.ok) {
         const text = await res.text();
         throw new Error(`HTTP ${res.status}: ${text}`);
@@ -72,13 +80,17 @@ function App() {
         Cardano Address Assets
       </Typography>
 
-      <Box display="flex" gap={2}>
+      <Box display="flex" gap={2} alignItems="center">
         <TextField
           fullWidth
           label="Cardano address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           placeholder="addr..."
+        />
+        <FormControlLabel
+          control={<Checkbox checked={raw} onChange={(e) => setRaw(e.target.checked)} />}
+          label="Raw"
         />
         <Button variant="contained" onClick={fetchAssets} disabled={loading || !address}>
           {loading ? 'Loading...' : 'Fetch'}
@@ -93,17 +105,32 @@ function App() {
 
       {data && (
         <Box mt={2}>
-          {'address' in maybeSummary && (
+          {raw && (
+            <Paper sx={{ p: 2 }}>
+              <pre style={{ margin: 0 }}>{JSON.stringify(data, null, 2)}</pre>
+            </Paper>
+          )}
+
+          {!raw && 'address' in maybeSummary && (
             <Paper sx={{ p: 2, mb: 2 }}>
               <Typography variant="subtitle1">Summary</Typography>
               <Typography variant="body2">Address: {maybeSummary.address}</Typography>
               <Typography variant="body2">Assets count: {maybeSummary.assetsCount}</Typography>
               <Typography variant="body2">Provider: {maybeSummary.provider}</Typography>
               <Typography variant="body2">Fetched: {maybeSummary.fetchedAt}</Typography>
+              {'utxosCount' in maybeSummary && (
+                <Typography variant="body2">UTXOs count: {maybeSummary.utxosCount}</Typography>
+              )}
+              {'info' in maybeSummary && maybeSummary.info && (
+                <Box mt={1}>
+                  <Typography variant="subtitle2">Info</Typography>
+                  <pre style={{ margin: 0 }}>{JSON.stringify(maybeSummary.info, null, 2)}</pre>
+                </Box>
+              )}
             </Paper>
           )}
 
-          {'assets' in maybeSummary && Array.isArray(maybeSummary.assets) && (
+          {!raw && 'assets' in maybeSummary && Array.isArray(maybeSummary.assets) && (
             <TableContainer component={Paper}>
               <Table size="small">
                 <TableHead>
@@ -126,10 +153,27 @@ function App() {
             </TableContainer>
           )}
 
-          {!('assets' in maybeSummary) && (
-            <Paper sx={{ p: 2, mt: 2 }}>
-              <pre style={{ margin: 0 }}>{JSON.stringify(data, null, 2)}</pre>
-            </Paper>
+          {!raw && 'utxos' in maybeSummary && Array.isArray(maybeSummary.utxos) && (
+            <TableContainer component={Paper} sx={{ mt: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>tx_hash</TableCell>
+                    <TableCell>tx_index</TableCell>
+                    <TableCell>value</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {maybeSummary.utxos.map((u: any, idx: number) => (
+                    <TableRow key={idx}>
+                      <TableCell>{String(u.tx_hash ?? '')}</TableCell>
+                      <TableCell>{String(u.tx_index ?? '')}</TableCell>
+                      <TableCell>{String(u.value ?? '')}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </Box>
       )}
