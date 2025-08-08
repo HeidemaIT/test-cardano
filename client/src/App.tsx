@@ -41,7 +41,7 @@ type ApiResponse =
 
 function App() {
   const [address, setAddress] = useState(
-    'addr1q9d9p4k0q3yqf7xp9a9h5r0d7k6l0cnyy9n9r5f2w9c9vqd0gqf0a99u0q2',
+    'addr1q9872xmn7jqgnh4n2h9nr52v38a4mm2xvgeg9tq3nhrhan45hmjtmx580zvj4dcylkp6w2twlzekrk9apsreqah8glhsjeuc96',
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
