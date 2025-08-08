@@ -80,15 +80,7 @@ addressRouter.get(
           : [];
       const utxos: Utxo[] = Array.isArray(utxosRaw) ? (utxosRaw as Utxo[]) : [];
 
-      // Log a concise summary
-      try {
-        (req as Request & { log?: { info: (o: unknown, m?: string) => void } }).log?.info(
-          { address: addr, assetsCount: assets.length, utxosCount: utxos.length },
-          'Address data fetched from Koios',
-        );
-      } catch {
-        // ignore logging errors
-      }
+      // Intentionally not logging Koios summary to reduce noise
 
       return res.json({
         address: addr,
