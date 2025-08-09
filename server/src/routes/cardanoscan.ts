@@ -102,10 +102,8 @@ cardanoscanRouter.get(
         utxos,
         assets,
       });
-    } catch (err) {
+    } catch (_err) {
       return res.status(500).json({ error: 'Failed to fetch assets' });
     }
   },
 );
-
-
