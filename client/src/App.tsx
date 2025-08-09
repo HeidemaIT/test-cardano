@@ -1,211 +1,63 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import './App.css';
-import {
-  Alert,
-  Box,
-  Button,
-  Checkbox,
-  Container,
-  FormControlLabel,
-  Stack,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from '@mui/material';
-
-type AssetSummary = {
-  policy_id?: string;
-  asset_name?: string;
-  quantity?: string | number;
-  [key: string]: unknown;
-};
-
-type ApiResponse =
-  | {
-      address: string;
-      provider: string;
-      fetchedAt: string;
-      info?: Record<string, unknown>;
-      assetsCount: number;
-      utxosCount?: number;
-      assets: AssetSummary[];
-      utxos?: Array<Record<string, unknown>>;
-    }
-  | unknown;
+import { AppBar, Container, IconButton, Tab, Tabs, Toolbar, Typography } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import Home from './pages/Home';
+import KoiosPage from './pages/KoiosPage';
+import CardanoscanPage from './pages/CardanoscanPage';
+import CustomPage from './pages/CustomPage';
 
 function App() {
-  const [address, setAddress] = useState(
-    'addr1q9d9p4k0q3yqf7xp9a9h5r0d7k6l0cnyy9n9r5f2w9c9vqd0gqf0a99u0q2',
-  );
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<ApiResponse | null>(null);
-  const [raw, setRaw] = useState(false);
-
-  const apiBaseUrl = useMemo(() => {
-    return (import.meta as unknown as { env: { VITE_API_BASE_URL?: string } }).env
-      .VITE_API_BASE_URL ?? 'http://localhost:3000';
-  }, []);
-
-  async function fetchAssets() {
-    setLoading(true);
-    setError(null);
-    setData(null);
-    try {
-      const url = new URL(`${apiBaseUrl}/address/${address}/assets`);
-      if (raw) url.searchParams.set('raw', '1');
-      const res = await fetch(url.toString());
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`HTTP ${res.status}: ${text}`);
-      }
-      const json = (await res.json()) as ApiResponse;
-      setData(json);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  type Summary = {
-    address?: string;
-    provider?: string;
-    fetchedAt?: string;
-    assetsCount?: number;
-    utxosCount?: number;
-    info?: Record<string, unknown>;
-    assets?: AssetSummary[];
-    utxos?: Array<{ tx_hash?: string; tx_index?: number; value?: string | number }>;
-  };
-  const maybeSummary = data as Summary;
+  const [, setProvider] = useState<'koios' | 'cardanoscan' | 'custom'>('koios');
+  const location = useLocation();
+  const navigate = useNavigate();
+  // Sync tab selection with route
+  const currentTab: 'koios' | 'cardanoscan' | 'custom' | false =
+    location.pathname.startsWith('/cardanoscan')
+      ? 'cardanoscan'
+      : location.pathname.startsWith('/custom')
+      ? 'custom'
+      : location.pathname.startsWith('/koios')
+      ? 'koios'
+      : false;
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Cardano Address Assets
-      </Typography>
-
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={2}
-        alignItems={{ xs: 'stretch', sm: 'center' }}
-        sx={{ width: '100%' }}
-      >
-        <TextField
-          fullWidth
-          label="Cardano address"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          placeholder="addr..."
-        />
-        <FormControlLabel
-          control={<Checkbox checked={raw} onChange={(e) => setRaw(e.target.checked)} />}
-          label="Raw"
-        />
-        <Button
-          variant="contained"
-          onClick={fetchAssets}
-          disabled={loading || !address}
-          sx={{ width: { xs: '100%', sm: 'auto' } }}
+    <>
+      <AppBar position="sticky">
+        <Toolbar>
+          <IconButton edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Cardano Wallet Assets
+          </Typography>
+        </Toolbar>
+        <Tabs
+          value={currentTab}
+          onChange={(_e, v) => {
+            setProvider(v);
+            navigate(v === 'koios' ? '/koios' : v === 'cardanoscan' ? '/cardanoscan' : '/custom');
+          }}
+          textColor="inherit"
+          indicatorColor="secondary"
+          sx={{ px: 2 }}
         >
-          {loading ? 'Loading...' : 'Fetch'}
-        </Button>
-      </Stack>
+          <Tab value="koios" label="Koios" />
+          <Tab value="cardanoscan" label="Cardanoscan" />
+          <Tab value="custom" label="Custom" />
+        </Tabs>
+      </AppBar>
 
-      {error && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      {data ? (
-        <Box mt={2}>
-          {raw && (
-            <Paper sx={{ p: 2 }}>
-              <pre style={{ margin: 0 }}>{JSON.stringify(data, null, 2)}</pre>
-            </Paper>
-          )}
-
-          {!raw && 'address' in maybeSummary && (
-            <Paper sx={{ p: 2, mb: 2 }}>
-              <Typography variant="subtitle1">Summary</Typography>
-              <Typography variant="body2">Address: {maybeSummary.address}</Typography>
-              <Typography variant="body2">Assets count: {maybeSummary.assetsCount}</Typography>
-              <Typography variant="body2">Provider: {maybeSummary.provider}</Typography>
-              <Typography variant="body2">Fetched: {maybeSummary.fetchedAt}</Typography>
-              {'utxosCount' in maybeSummary && (
-                <Typography variant="body2">UTXOs count: {maybeSummary.utxosCount}</Typography>
-              )}
-              {'info' in maybeSummary && maybeSummary.info && (
-                <Box mt={1}>
-                  <Typography variant="subtitle2">Info</Typography>
-                  <pre style={{ margin: 0 }}>{JSON.stringify(maybeSummary.info, null, 2)}</pre>
-                </Box>
-              )}
-            </Paper>
-          )}
-
-          {!raw && 'assets' in maybeSummary && Array.isArray(maybeSummary.assets) && (
-            <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>policy_id</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>asset_name</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>quantity</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {maybeSummary.assets.map((a: AssetSummary, idx: number) => (
-                    <TableRow key={idx}>
-                      <TableCell sx={{ wordBreak: 'break-all' }}>
-                        {String(a.policy_id ?? '')}
-                      </TableCell>
-                      <TableCell sx={{ wordBreak: 'break-all' }}>
-                        {String(a.asset_name ?? '')}
-                      </TableCell>
-                      <TableCell sx={{ wordBreak: 'break-all' }}>
-                        {String(a.quantity ?? '')}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-
-          {!raw && 'utxos' in maybeSummary && Array.isArray(maybeSummary.utxos) && (
-            <TableContainer component={Paper} sx={{ mt: 2, overflowX: 'auto' }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>tx_hash</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>tx_index</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>value</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {maybeSummary.utxos.map((u, idx: number) => (
-                    <TableRow key={idx}>
-                      <TableCell sx={{ wordBreak: 'break-all' }}>{String(u.tx_hash ?? '')}</TableCell>
-                      <TableCell sx={{ wordBreak: 'break-all' }}>{String(u.tx_index ?? '')}</TableCell>
-                      <TableCell sx={{ wordBreak: 'break-all' }}>{String(u.value ?? '')}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </Box>
-      ) : null}
-    </Container>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/koios" element={<KoiosPage />} />
+          <Route path="/cardanoscan" element={<CardanoscanPage />} />
+          <Route path="/custom" element={<CustomPage />} />
+        </Routes>
+      </Container>
+    </>
   );
 }
 
