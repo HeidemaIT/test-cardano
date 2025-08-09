@@ -23,10 +23,13 @@ const EnvSchema = z.object({
   CUSTOM_INFO_URL: z.string().url().optional(),
   CUSTOM_UTXOS_URL: z.string().url().optional(),
   CUSTOM_ASSETS_URL: z.string().url().optional(),
+  // Optional generic base URL (e.g., Koios base: https://api.koios.rest/api/v1)
+  CARDANO_BASE_URL: z.string().url().optional(),
   // Optional Cardanoscan provider (templated GET URLs; {addr} will be replaced)
   CARDANOSCAN_INFO_URL_TEMPLATE: z.string().url().optional(),
   CARDANOSCAN_UTXOS_URL_TEMPLATE: z.string().url().optional(),
   CARDANOSCAN_ASSETS_URL_TEMPLATE: z.string().url().optional(),
+  CARDANOSCAN_BASE_URL: z.string().url().optional(),
   CARDANOSCAN_API_KEY: z.string().optional(),
 });
 
@@ -43,8 +46,10 @@ export const env: Env = EnvSchema.parse({
   CUSTOM_INFO_URL: process.env.CUSTOM_INFO_URL,
   CUSTOM_UTXOS_URL: process.env.CUSTOM_UTXOS_URL,
   CUSTOM_ASSETS_URL: process.env.CUSTOM_ASSETS_URL,
+  CARDANO_BASE_URL: process.env.CARDANO_BASE_URL,
   CARDANOSCAN_INFO_URL_TEMPLATE: process.env.CARDANOSCAN_INFO_URL_TEMPLATE,
   CARDANOSCAN_UTXOS_URL_TEMPLATE: process.env.CARDANOSCAN_UTXOS_URL_TEMPLATE,
   CARDANOSCAN_ASSETS_URL_TEMPLATE: process.env.CARDANOSCAN_ASSETS_URL_TEMPLATE,
+  CARDANOSCAN_BASE_URL: process.env.CARDANOSCAN_BASE_URL,
   CARDANOSCAN_API_KEY: process.env.CARDANOSCAN_API_KEY,
 });

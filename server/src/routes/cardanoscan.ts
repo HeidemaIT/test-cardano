@@ -14,6 +14,12 @@ function buildUrl(template: string | undefined, addr: string): string | null {
   return template.replace('{addr}', encodeURIComponent(addr));
 }
 
+function buildFromBase(base: string | undefined, path: string, addr: string): string | null {
+  if (!base) return null;
+  const normalized = base.replace(/\/$/, '');
+  return `${normalized}${path}`.replace('{addr}', encodeURIComponent(addr));
+}
+
 cardanoscanRouter.get(
   '/cardanoscan/:addr/assets',
   validateParams(AddressParamsSchema),
@@ -21,9 +27,15 @@ cardanoscanRouter.get(
     const { addr } = req.params as { addr: string };
     const raw = req.query.raw === '1' || req.query.raw === 'true';
 
-    const infoUrl = buildUrl(env.CARDANOSCAN_INFO_URL_TEMPLATE, addr);
-    const utxosUrl = buildUrl(env.CARDANOSCAN_UTXOS_URL_TEMPLATE, addr);
-    const assetsUrl = buildUrl(env.CARDANOSCAN_ASSETS_URL_TEMPLATE, addr);
+    const infoUrl =
+      buildUrl(env.CARDANOSCAN_INFO_URL_TEMPLATE, addr) ||
+      buildFromBase(env.CARDANOSCAN_BASE_URL, '/address/{addr}/info', addr);
+    const utxosUrl =
+      buildUrl(env.CARDANOSCAN_UTXOS_URL_TEMPLATE, addr) ||
+      buildFromBase(env.CARDANOSCAN_BASE_URL, '/address/{addr}/utxos', addr);
+    const assetsUrl =
+      buildUrl(env.CARDANOSCAN_ASSETS_URL_TEMPLATE, addr) ||
+      buildFromBase(env.CARDANOSCAN_BASE_URL, '/address/{addr}/assets', addr);
     if (!infoUrl || !utxosUrl || !assetsUrl) {
       return res.status(501).json({ error: 'Cardanoscan provider not configured' });
     }
