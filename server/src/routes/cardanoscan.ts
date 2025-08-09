@@ -1,42 +1,58 @@
-import { Router, type Request } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
 import { validateParams } from '../middleware/validate';
+import { env } from '../config/env';
 
-export const addressRouter = Router();
+export const cardanoscanRouter = Router();
 
 const AddressParamsSchema = z.object({
   addr: z.string().min(10),
 });
 
-addressRouter.get(
-  '/address/:addr/assets',
+function buildUrl(template: string | undefined, addr: string): string | null {
+  if (!template) return null;
+  return template.replace('{addr}', encodeURIComponent(addr));
+}
+
+function buildFromBase(base: string | undefined, path: string, addr: string): string | null {
+  if (!base) return null;
+  const normalized = base.replace(/\/$/, '');
+  return `${normalized}${path}`.replace('{addr}', encodeURIComponent(addr));
+}
+
+cardanoscanRouter.get(
+  '/cardanoscan/:addr/assets',
   validateParams(AddressParamsSchema),
   async (req, res) => {
     const { addr } = req.params as { addr: string };
     const raw = req.query.raw === '1' || req.query.raw === 'true';
+
+    const infoUrl =
+      buildUrl(env.CARDANOSCAN_INFO_URL_TEMPLATE, addr) ||
+      buildFromBase(env.CARDANOSCAN_BASE_URL, '/address/{addr}/info', addr);
+    const utxosUrl =
+      buildUrl(env.CARDANOSCAN_UTXOS_URL_TEMPLATE, addr) ||
+      buildFromBase(env.CARDANOSCAN_BASE_URL, '/address/{addr}/utxos', addr);
+    const assetsUrl =
+      buildUrl(env.CARDANOSCAN_ASSETS_URL_TEMPLATE, addr) ||
+      buildFromBase(env.CARDANOSCAN_BASE_URL, '/address/{addr}/assets', addr);
+    if (!infoUrl || !utxosUrl || !assetsUrl) {
+      return res.status(501).json({ error: 'Cardanoscan provider not configured' });
+    }
+
+    const headers: Record<string, string> = {};
+    if (env.CARDANOSCAN_API_KEY) headers['authorization'] = `Bearer ${env.CARDANOSCAN_API_KEY}`;
+
     try {
-      // Fetch multiple datasets from Koios concurrently
       const [infoRes, utxosRes, assetsRes] = await Promise.all([
-        fetch('https://api.koios.rest/api/v1/address_info', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ _addresses: [addr] }),
-        }),
-        fetch('https://api.koios.rest/api/v1/address_utxos', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ _addresses: [addr] }),
-        }),
-        fetch('https://api.koios.rest/api/v1/address_assets', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ _addresses: [addr] }),
-        }),
+        fetch(infoUrl, { headers }),
+        fetch(utxosUrl, { headers }),
+        fetch(assetsUrl, { headers }),
       ]);
 
       if (!infoRes.ok || !utxosRes.ok || !assetsRes.ok) {
         return res.status(502).json({
-          error: 'Upstream error from Koios',
+          error: 'Upstream error from Cardanoscan provider',
           statuses: {
             info: infoRes.status,
             utxos: utxosRes.status,
@@ -76,19 +92,9 @@ addressRouter.get(
           : [];
       const utxos: Utxo[] = Array.isArray(utxosRaw) ? (utxosRaw as Utxo[]) : [];
 
-      // Log a concise summary
-      try {
-        (req as Request & { log?: { info: (o: unknown, m?: string) => void } }).log?.info(
-          { address: addr, assetsCount: assets.length, utxosCount: utxos.length },
-          'Address data fetched from Koios',
-        );
-      } catch {
-        // ignore logging errors
-      }
-
       return res.json({
         address: addr,
-        provider: 'koios',
+        provider: 'cardanoscan',
         fetchedAt: new Date().toISOString(),
         info: infoFirst ?? infoRaw,
         utxosCount: utxos.length,
@@ -96,11 +102,7 @@ addressRouter.get(
         utxos,
         assets,
       });
-    } catch (err) {
-      (req as Request & { log?: { error: (o: unknown, m?: string) => void } }).log?.error(
-        { err },
-        'Failed to fetch assets from Koios',
-      );
+    } catch (_err) {
       return res.status(500).json({ error: 'Failed to fetch assets' });
     }
   },
