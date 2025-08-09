@@ -10,6 +10,8 @@ import { env } from './config/env';
 import { healthRouter } from './routes/health';
 import { echoRouter } from './routes/echo';
 import { addressRouter } from './routes/address';
+import { customRouter } from './routes/custom';
+import { cardanoscanRouter } from './routes/cardanoscan';
 
 export const app = express();
 
@@ -63,6 +65,8 @@ app.use(
 app.use(healthRouter);
 app.use(echoRouter);
 app.use(addressRouter);
+app.use(customRouter);
+app.use(cardanoscanRouter);
 
 // 404 handler
 app.use((_req, res) => {

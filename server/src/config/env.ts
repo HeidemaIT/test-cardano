@@ -19,6 +19,15 @@ const EnvSchema = z.object({
     ),
   RATE_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_MAX: z.coerce.number().int().positive().default(100),
+  // Optional self-hosted/custom provider endpoints (use same POST body as Koios: { _addresses: [addr] })
+  CUSTOM_INFO_URL: z.string().url().optional(),
+  CUSTOM_UTXOS_URL: z.string().url().optional(),
+  CUSTOM_ASSETS_URL: z.string().url().optional(),
+  // Optional Cardanoscan provider (templated GET URLs; {addr} will be replaced)
+  CARDANOSCAN_INFO_URL_TEMPLATE: z.string().url().optional(),
+  CARDANOSCAN_UTXOS_URL_TEMPLATE: z.string().url().optional(),
+  CARDANOSCAN_ASSETS_URL_TEMPLATE: z.string().url().optional(),
+  CARDANOSCAN_API_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
@@ -31,4 +40,11 @@ export const env: Env = EnvSchema.parse({
   CORS_ORIGINS: process.env.CORS_ORIGINS,
   RATE_WINDOW_MS: process.env.RATE_WINDOW_MS,
   RATE_MAX: process.env.RATE_MAX,
+  CUSTOM_INFO_URL: process.env.CUSTOM_INFO_URL,
+  CUSTOM_UTXOS_URL: process.env.CUSTOM_UTXOS_URL,
+  CUSTOM_ASSETS_URL: process.env.CUSTOM_ASSETS_URL,
+  CARDANOSCAN_INFO_URL_TEMPLATE: process.env.CARDANOSCAN_INFO_URL_TEMPLATE,
+  CARDANOSCAN_UTXOS_URL_TEMPLATE: process.env.CARDANOSCAN_UTXOS_URL_TEMPLATE,
+  CARDANOSCAN_ASSETS_URL_TEMPLATE: process.env.CARDANOSCAN_ASSETS_URL_TEMPLATE,
+  CARDANOSCAN_API_KEY: process.env.CARDANOSCAN_API_KEY,
 });
