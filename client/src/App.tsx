@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import './App.css';
-import { AppBar, Box, Tab, Tabs, Toolbar, Typography, Button } from '@mui/material';
+import { AppBar, Box, Tab, Tabs, Toolbar, Typography, Button, IconButton } from '@mui/material';
+import { Brightness4, Brightness7 } from '@mui/icons-material';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
+import { useTheme } from './contexts/ThemeContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import Home from './pages/Home';
 import KoiosPage from './pages/KoiosPage';
@@ -18,6 +20,7 @@ function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   
   // Sync tab selection with route
   const currentTab: 'home' | 'koios' | 'cardanoscan' | 'custom' | 'bitvavo' =
@@ -60,6 +63,14 @@ function AppContent() {
           </Typography>
           {user && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <IconButton
+                color="inherit"
+                onClick={toggleTheme}
+                sx={{ ml: 1 }}
+                aria-label="toggle theme"
+              >
+                {isDarkMode ? <Brightness7 /> : <Brightness4 />}
+              </IconButton>
               <Button
                 color="inherit"
                 onClick={handleUserClick}
