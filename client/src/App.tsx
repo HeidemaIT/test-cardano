@@ -10,6 +10,7 @@ import CardanoscanPage from './pages/CardanoscanPage';
 import CustomPage from './pages/CustomPage';
 import BitvavoPage from './pages/BitvavoPage';
 import LoginPage from './pages/LoginPage';
+import UserPage from './pages/UserPage';
 
 function AppContent() {
   const [, setProvider] = useState<'koios' | 'cardanoscan' | 'custom' | 'bitvavo'>('koios');
@@ -45,6 +46,10 @@ function AppContent() {
     );
   };
 
+  const handleUserClick = () => {
+    navigate('/user');
+  };
+
   return (
     <>
       <AppBar position="sticky">
@@ -54,11 +59,17 @@ function AppContent() {
           </Typography>
           {user && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Typography variant="body2">
+              <Button
+                color="inherit"
+                onClick={handleUserClick}
+                variant="outlined"
+                size="small"
+                sx={{ textTransform: 'none' }}
+              >
                 {user.email}
-              </Typography>
-              <Button 
-                color="inherit" 
+              </Button>
+              <Button
+                color="inherit"
                 onClick={handleLogout}
                 variant="outlined"
                 size="small"
@@ -112,6 +123,11 @@ function AppContent() {
             <Route path="/bitvavo" element={
               <ProtectedRoute>
                 <BitvavoPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/user" element={
+              <ProtectedRoute>
+                <UserPage />
               </ProtectedRoute>
             } />
             {/* Catch all route - redirect to login if not authenticated */}
