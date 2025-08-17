@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Alert, Box, Button, Checkbox, FormControlLabel, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Checkbox, FormControlLabel, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Snackbar } from '@mui/material';
+import { useSavedAddresses } from '../hooks/useSavedAddresses';
+import { SavedAddresses } from './SavedAddresses';
 
 type AssetSummary = {
   policy_id?: string;
@@ -25,6 +27,10 @@ export function KoiosForm() {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<Summary | null>(null);
   const [raw, setRaw] = useState(false);
+  const [showSavePrompt, setShowSavePrompt] = useState(false);
+  const [lastSuccessfulAddress, setLastSuccessfulAddress] = useState<string>('');
+
+  const { savedAddresses, addAddress, removeAddress, clearAddresses } = useSavedAddresses();
 
   const apiBaseUrl = useMemo(() => {
     return (import.meta as unknown as { env: { VITE_API_BASE_URL?: string } }).env
@@ -40,13 +46,35 @@ export function KoiosForm() {
       if (raw) url.searchParams.set('raw', '1');
       const res = await fetch(url.toString());
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setData((await res.json()) as Summary);
+      const result = await res.json() as Summary;
+      setData(result);
+      
+      // Show save prompt if this is a new address
+      if (result.address && !savedAddresses.includes(result.address)) {
+        setLastSuccessfulAddress(result.address);
+        setShowSavePrompt(true);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
   }
+
+  const handleSaveAddress = () => {
+    if (lastSuccessfulAddress) {
+      addAddress(lastSuccessfulAddress);
+      setShowSavePrompt(false);
+    }
+  };
+
+  const handleDismissSavePrompt = () => {
+    setShowSavePrompt(false);
+  };
+
+  const handleAddressClick = (clickedAddress: string) => {
+    setAddress(clickedAddress);
+  };
 
   const summary = data as Summary;
 
@@ -59,6 +87,13 @@ export function KoiosForm() {
           {loading ? 'Loading...' : 'Fetch'}
         </Button>
       </Box>
+
+      <SavedAddresses
+        addresses={savedAddresses}
+        onAddressClick={handleAddressClick}
+        onAddressRemove={removeAddress}
+        onClearAll={clearAddresses}
+      />
 
       {error && (
         <Alert severity="error" sx={{ mt: 2 }}>
@@ -111,6 +146,23 @@ export function KoiosForm() {
           )}
         </Box>
       ) : null}
+
+      <Snackbar
+        open={showSavePrompt}
+        autoHideDuration={6000}
+        onClose={handleDismissSavePrompt}
+        message={`Successfully fetched data for ${lastSuccessfulAddress}. Save this address for quick access?`}
+        action={
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button color="primary" size="small" onClick={handleSaveAddress}>
+              Save
+            </Button>
+            <Button color="inherit" size="small" onClick={handleDismissSavePrompt}>
+              Dismiss
+            </Button>
+          </Box>
+        }
+      />
     </Box>
   );
 }

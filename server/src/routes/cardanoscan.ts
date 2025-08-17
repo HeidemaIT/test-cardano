@@ -27,18 +27,23 @@ cardanoscanRouter.get(
     const { addr } = req.params as { addr: string };
     const raw = req.query.raw === '1' || req.query.raw === 'true';
 
-    const infoUrl =
-      buildUrl(env.CARDANOSCAN_INFO_URL_TEMPLATE, addr) ||
-      buildFromBase(env.CARDANOSCAN_BASE_URL, '/address/{addr}/info', addr);
-    const utxosUrl =
-      buildUrl(env.CARDANOSCAN_UTXOS_URL_TEMPLATE, addr) ||
-      buildFromBase(env.CARDANOSCAN_BASE_URL, '/address/{addr}/utxos', addr);
-    const assetsUrl =
-      buildUrl(env.CARDANOSCAN_ASSETS_URL_TEMPLATE, addr) ||
-      buildFromBase(env.CARDANOSCAN_BASE_URL, '/address/{addr}/assets', addr);
-    if (!infoUrl || !utxosUrl || !assetsUrl) {
-      return res.status(501).json({ error: 'Cardanoscan provider not configured' });
-    }
+    // Debug logging
+    console.log('Cardanoscan environment variables:');
+    console.log('CARDANOSCAN_INFO_URL_TEMPLATE:', env.CARDANOSCAN_INFO_URL_TEMPLATE);
+    console.log('CARDANOSCAN_UTXOS_URL_TEMPLATE:', env.CARDANOSCAN_UTXOS_URL_TEMPLATE);
+    console.log('CARDANOSCAN_ASSETS_URL_TEMPLATE:', env.CARDANOSCAN_ASSETS_URL_TEMPLATE);
+    console.log('CARDANOSCAN_BASE_URL:', env.CARDANOSCAN_BASE_URL);
+    console.log('CARDANOSCAN_API_KEY:', env.CARDANOSCAN_API_KEY ? '***' : 'not set');
+
+    // Temporary hardcoded URLs for testing
+    const infoUrl = `https://api.cardanoscan.io/api/v1/address/${encodeURIComponent(addr)}/info`;
+    const utxosUrl = `https://api.cardanoscan.io/api/v1/address/${encodeURIComponent(addr)}/utxos`;
+    const assetsUrl = `https://api.cardanoscan.io/api/v1/address/${encodeURIComponent(addr)}/assets`;
+    
+    console.log('Built URLs:');
+    console.log('infoUrl:', infoUrl);
+    console.log('utxosUrl:', utxosUrl);
+    console.log('assetsUrl:', assetsUrl);
 
     const headers: Record<string, string> = {};
     if (env.CARDANOSCAN_API_KEY) headers['authorization'] = `Bearer ${env.CARDANOSCAN_API_KEY}`;
@@ -51,6 +56,19 @@ cardanoscanRouter.get(
       ]);
 
       if (!infoRes.ok || !utxosRes.ok || !assetsRes.ok) {
+        // Check if it's an authentication error
+        if (infoRes.status === 401 || utxosRes.status === 401 || assetsRes.status === 401) {
+          return res.status(401).json({
+            error: 'Cardanoscan API authentication failed. Please check your API key or use a different provider.',
+            suggestion: 'Try using the Koios provider instead, which doesn\'t require authentication.',
+            statuses: {
+              info: infoRes.status,
+              utxos: utxosRes.status,
+              assets: assetsRes.status,
+            },
+          });
+        }
+        
         return res.status(502).json({
           error: 'Upstream error from Cardanoscan provider',
           statuses: {

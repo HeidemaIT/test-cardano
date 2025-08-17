@@ -13,8 +13,18 @@ customRouter.get('/custom/:addr/assets', validateParams(AddressParamsSchema), as
   const { addr } = req.params as { addr: string };
   const raw = req.query.raw === '1' || req.query.raw === 'true';
 
+  // Debug logging
+  console.log('Custom environment variables:');
+  console.log('CUSTOM_INFO_URL:', env.CUSTOM_INFO_URL);
+  console.log('CUSTOM_UTXOS_URL:', env.CUSTOM_UTXOS_URL);
+  console.log('CUSTOM_ASSETS_URL:', env.CUSTOM_ASSETS_URL);
+
   if (!env.CUSTOM_INFO_URL || !env.CUSTOM_UTXOS_URL || !env.CUSTOM_ASSETS_URL) {
-    return res.status(501).json({ error: 'Custom provider not configured' });
+    return res.status(501).json({ 
+      error: 'Custom provider not configured',
+      suggestion: 'Please configure CUSTOM_INFO_URL, CUSTOM_UTXOS_URL, and CUSTOM_ASSETS_URL in your environment variables, or use the Koios provider instead.',
+      fallback: 'You can use the Koios provider which works out of the box without configuration.'
+    });
   }
 
   try {
