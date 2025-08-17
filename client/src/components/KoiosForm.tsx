@@ -45,6 +45,14 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
     }).format(value);
   };
 
+  // Helper function to format numbers with commas
+  const formatNumber = (value: string | number | undefined) => {
+    if (value === undefined || value === null) return '';
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(num)) return String(value);
+    return new Intl.NumberFormat('en-US').format(num);
+  };
+
   const [address, setAddress] = useState(initialAddress || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -196,9 +204,9 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
                     {showTechnicalColumns && <TableCell>Asset Name</TableCell>}
                     <TableCell>Display Name</TableCell>
                     {showTechnicalColumns && <TableCell>Ticker</TableCell>}
-                    <TableCell>Quantity</TableCell>
-                    <TableCell>Value (USD)</TableCell>
-                    <TableCell>Value (EUR)</TableCell>
+                    <TableCell sx={{ textAlign: 'right' }}>Quantity</TableCell>
+                    <TableCell sx={{ textAlign: 'right' }}>Value (USD)</TableCell>
+                    <TableCell sx={{ textAlign: 'right' }}>Value (EUR)</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -214,11 +222,11 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
                       {showTechnicalColumns && (
                         <TableCell sx={{ wordBreak: 'break-all' }}>{String(a.ticker ?? '')}</TableCell>
                       )}
-                      <TableCell sx={{ wordBreak: 'break-all' }}>{String(a.quantity ?? '')}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                      <TableCell sx={{ wordBreak: 'break-all', textAlign: 'right' }}>{formatNumber(a.quantity)}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'success.main', textAlign: 'right' }}>
                         {formatCurrency(a.usd_value, 'USD')}
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'success.main', textAlign: 'right' }}>
                         {formatCurrency(a.eur_value, 'EUR')}
                       </TableCell>
                     </TableRow>
