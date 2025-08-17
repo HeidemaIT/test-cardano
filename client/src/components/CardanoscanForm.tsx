@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Alert, Box, Button, Checkbox, FormControlLabel, Paper, TextField, Typography, Snackbar } from '@mui/material';
-import { useSavedAddresses } from '../hooks/useSavedAddresses';
+import { useServerSavedAddresses } from '../hooks/useServerSavedAddresses';
 import { SavedAddresses } from './SavedAddresses';
+import { supabase } from '../lib/supabase';
 
 type ResponseShape = unknown;
 
@@ -14,7 +15,7 @@ export function CardanoscanForm() {
   const [showSavePrompt, setShowSavePrompt] = useState(false);
   const [lastSuccessfulAddress, setLastSuccessfulAddress] = useState<string>('');
 
-  const { savedAddresses, addAddress, removeAddress, clearAddresses } = useSavedAddresses();
+  const { savedAddresses, addAddress, removeAddress, clearAddresses, loading: addressesLoading } = useServerSavedAddresses();
 
   const apiBaseUrl = useMemo(() => {
     return (import.meta as unknown as { env: { VITE_API_BASE_URL?: string } }).env
@@ -28,15 +29,29 @@ export function CardanoscanForm() {
     try {
       const url = new URL(`${apiBaseUrl}/cardanoscan/${address}/assets`);
       if (raw) url.searchParams.set('raw', '1');
-      const res = await fetch(url.toString());
+      
+      // Get auth headers
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+      
+      const res = await fetch(url.toString(), { headers });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const result = await res.json();
       setData(result);
       
-      // Show save prompt if this is a new address
-      if (address && !savedAddresses.includes(address)) {
-        setLastSuccessfulAddress(address);
-        setShowSavePrompt(true);
+      // Show save prompt if this is a new address and it was successfully saved
+      if (result.address && result.saved) {
+        const isAlreadySaved = savedAddresses.some(addr => addr.address === result.address);
+        if (!isAlreadySaved) {
+          setLastSuccessfulAddress(result.address);
+          setShowSavePrompt(true);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -45,10 +60,12 @@ export function CardanoscanForm() {
     }
   }
 
-  const handleSaveAddress = () => {
+  const handleSaveAddress = async () => {
     if (lastSuccessfulAddress) {
-      addAddress(lastSuccessfulAddress);
-      setShowSavePrompt(false);
+      const success = await addAddress(lastSuccessfulAddress, 'cardanoscan');
+      if (success) {
+        setShowSavePrompt(false);
+      }
     }
   };
 
@@ -58,6 +75,10 @@ export function CardanoscanForm() {
 
   const handleAddressClick = (clickedAddress: string) => {
     setAddress(clickedAddress);
+  };
+
+  const handleAddressRemove = async (addressToRemove: string) => {
+    await removeAddress(addressToRemove, 'cardanoscan');
   };
 
   return (
@@ -71,9 +92,9 @@ export function CardanoscanForm() {
       </Box>
 
       <SavedAddresses
-        addresses={savedAddresses}
+        addresses={savedAddresses.map(addr => addr.address)}
         onAddressClick={handleAddressClick}
-        onAddressRemove={removeAddress}
+        onAddressRemove={handleAddressRemove}
         onClearAll={clearAddresses}
       />
 

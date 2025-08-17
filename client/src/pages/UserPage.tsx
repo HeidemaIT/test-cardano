@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useSavedAddresses } from '../hooks/useSavedAddresses';
+import { useServerSavedAddresses } from '../hooks/useServerSavedAddresses';
 import {
   Container,
   Typography,
@@ -38,7 +38,7 @@ export default function UserPage() {
   const navigate = useNavigate();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
-  const { savedAddresses, removeAddress, clearAddresses } = useSavedAddresses();
+  const { savedAddresses, removeAddress, clearAddresses, loading: addressesLoading } = useServerSavedAddresses();
 
   const handleLogout = async () => {
     await signOut();
@@ -52,6 +52,14 @@ export default function UserPage() {
   const handleAddressClick = (address: string) => {
     // Navigate to Koios page with the address pre-filled
     navigate('/koios', { state: { selectedAddress: address } });
+  };
+
+  const handleAddressRemove = async (address: string) => {
+    // Find the provider for this address
+    const savedAddress = savedAddresses.find(addr => addr.address === address);
+    if (savedAddress) {
+      await removeAddress(address, savedAddress.provider);
+    }
   };
 
   const handleClearAllAddresses = () => {
@@ -139,9 +147,9 @@ export default function UserPage() {
           </Box>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {savedAddresses.map((address) => (
+            {savedAddresses.map((savedAddress) => (
               <Box
-                key={address}
+                key={savedAddress.id}
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
@@ -156,10 +164,10 @@ export default function UserPage() {
                 }}
               >
                 <Chip
-                  label={address}
+                  label={`${savedAddress.address} (${savedAddress.provider})`}
                   size="small"
                   clickable
-                  onClick={() => handleAddressClick(address)}
+                  onClick={() => handleAddressClick(savedAddress.address)}
                   sx={{
                     flexGrow: 1,
                     justifyContent: 'flex-start',
@@ -173,7 +181,7 @@ export default function UserPage() {
                 <Tooltip title="Remove address">
                   <IconButton
                     size="small"
-                    onClick={() => removeAddress(address)}
+                    onClick={() => handleAddressRemove(savedAddress.address)}
                     color="error"
                   >
                     <CloseIcon fontSize="small" />

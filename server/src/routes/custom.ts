@@ -1,9 +1,14 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { validateParams } from '../middleware/validate';
+import { validateParams } from '../middleware/validate.js';
+import { authMiddleware } from '../middleware/auth.js';
+import { AddressService } from '../services/addressService.js';
 import { env } from '../config/env';
 
 export const customRouter = Router();
+
+// Apply authentication middleware to all routes
+customRouter.use(authMiddleware.authenticate);
 
 const AddressParamsSchema = z.object({
   addr: z.string().min(10),
@@ -88,6 +93,16 @@ customRouter.get('/custom/:addr/assets', validateParams(AddressParamsSchema), as
         : [];
     const utxos: Utxo[] = Array.isArray(utxosRaw) ? (utxosRaw as Utxo[]) : [];
 
+    // If user is authenticated, save the address automatically
+    if (req.user) {
+      try {
+        await AddressService.saveAddress(req.user.id, addr, 'custom');
+      } catch (error) {
+        console.error('Failed to save address:', error);
+        // Don't fail the request if saving fails
+      }
+    }
+
     return res.json({
       address: addr,
       provider: 'custom',
@@ -97,6 +112,7 @@ customRouter.get('/custom/:addr/assets', validateParams(AddressParamsSchema), as
       assetsCount: assets.length,
       utxos,
       assets,
+      saved: req.user ? true : false,
     });
   } catch (_err) {
     return res.status(500).json({ error: 'Failed to fetch assets' });

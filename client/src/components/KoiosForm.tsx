@@ -1,7 +1,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Alert, Box, Button, Checkbox, FormControlLabel, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Snackbar } from '@mui/material';
-import { useSavedAddresses } from '../hooks/useSavedAddresses';
+import { useServerSavedAddresses } from '../hooks/useServerSavedAddresses';
 import { SavedAddresses } from './SavedAddresses';
+import { supabase } from '../lib/supabase';
 
 type AssetSummary = {
   policy_id?: string;
@@ -34,7 +35,7 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
   const [showSavePrompt, setShowSavePrompt] = useState(false);
   const [lastSuccessfulAddress, setLastSuccessfulAddress] = useState<string>('');
 
-  const { savedAddresses, addAddress, removeAddress, clearAddresses } = useSavedAddresses();
+          const { savedAddresses, addAddress, removeAddress, clearAddresses, loading: addressesLoading } = useServerSavedAddresses();
 
   // Update address when initialAddress prop changes
   useEffect(() => {
@@ -48,22 +49,36 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
       .VITE_API_BASE_URL ?? 'http://localhost:3000';
   }, []);
 
-  async function fetchAssets() {
+    async function fetchAssets() {
     setLoading(true);
     setError(null);
     setData(null);
     try {
       const url = new URL(`${apiBaseUrl}/address/${address}/assets`);
       if (raw) url.searchParams.set('raw', '1');
-      const res = await fetch(url.toString());
+      
+      // Get auth headers
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+      
+      const res = await fetch(url.toString(), { headers });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const result = await res.json() as Summary;
       setData(result);
-      
-      // Show save prompt if this is a new address
-      if (result.address && !savedAddresses.includes(result.address)) {
-        setLastSuccessfulAddress(result.address);
-        setShowSavePrompt(true);
+
+      // Show save prompt if this is a new address and it was successfully saved
+      if (result.address && result.saved) {
+        const isAlreadySaved = savedAddresses.some(addr => addr.address === result.address);
+        if (!isAlreadySaved) {
+          setLastSuccessfulAddress(result.address);
+          setShowSavePrompt(true);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -72,10 +87,12 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
     }
   }
 
-  const handleSaveAddress = () => {
+  const handleSaveAddress = async () => {
     if (lastSuccessfulAddress) {
-      addAddress(lastSuccessfulAddress);
-      setShowSavePrompt(false);
+      const success = await addAddress(lastSuccessfulAddress, 'koios');
+      if (success) {
+        setShowSavePrompt(false);
+      }
     }
   };
 
@@ -83,9 +100,13 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
     setShowSavePrompt(false);
   };
 
-  const handleAddressClick = (clickedAddress: string) => {
-    setAddress(clickedAddress);
-  };
+          const handleAddressClick = (clickedAddress: string) => {
+          setAddress(clickedAddress);
+        };
+
+        const handleAddressRemove = async (addressToRemove: string) => {
+          await removeAddress(addressToRemove, 'koios');
+        };
 
   const summary = data as Summary;
 
@@ -99,12 +120,12 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
         </Button>
       </Box>
 
-      <SavedAddresses
-        addresses={savedAddresses}
-        onAddressClick={handleAddressClick}
-        onAddressRemove={removeAddress}
-        onClearAll={clearAddresses}
-      />
+                   <SavedAddresses
+               addresses={savedAddresses.map(addr => addr.address)}
+               onAddressClick={handleAddressClick}
+               onAddressRemove={handleAddressRemove}
+               onClearAll={clearAddresses}
+             />
 
       {error && (
         <Alert severity="error" sx={{ mt: 2 }}>

@@ -1,8 +1,13 @@
 import { Router, type Request } from 'express';
 import { z } from 'zod';
-import { validateParams } from '../middleware/validate';
+import { validateParams } from '../middleware/validate.js';
+import { authMiddleware } from '../middleware/auth.js';
+import { AddressService } from '../services/addressService.js';
 
 export const addressRouter = Router();
+
+// Apply authentication middleware to all routes
+addressRouter.use(authMiddleware.authenticate);
 
 const AddressParamsSchema = z.object({
   addr: z.string().min(10),
@@ -82,6 +87,16 @@ addressRouter.get(
 
       // Intentionally not logging Koios summary to reduce noise
 
+      // If user is authenticated, save the address automatically
+      if (req.user) {
+        try {
+          await AddressService.saveAddress(req.user.id, addr, 'koios');
+        } catch (error) {
+          console.error('Failed to save address:', error);
+          // Don't fail the request if saving fails
+        }
+      }
+
       return res.json({
         address: addr,
         provider: 'koios',
@@ -91,6 +106,7 @@ addressRouter.get(
         assetsCount: assets.length,
         utxos,
         assets,
+        saved: req.user ? true : false,
       });
     } catch (err) {
       (req as Request & { log?: { error: (o: unknown, m?: string) => void } }).log?.error(

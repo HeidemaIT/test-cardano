@@ -7,12 +7,13 @@ import pinoHttp from 'pino-http';
 import hpp from 'hpp';
 import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
-import { healthRouter } from './routes/health';
-import { echoRouter } from './routes/echo';
-import { addressRouter } from './routes/address';
-import { customRouter } from './routes/custom';
-import { cardanoscanRouter } from './routes/cardanoscan';
-import { bitvavoRouter } from './routes/bitvavo';
+import { healthRouter } from './routes/health.js';
+import { echoRouter } from './routes/echo.js';
+import { addressRouter } from './routes/address.js';
+import { customRouter } from './routes/custom.js';
+import { cardanoscanRouter } from './routes/cardanoscan.js';
+import { bitvavoRouter } from './routes/bitvavo.js';
+import { addressesRouter } from './routes/addresses.js';
 
 export const app = express();
 
@@ -69,6 +70,7 @@ app.use(addressRouter);
 app.use(customRouter);
 app.use(cardanoscanRouter);
 app.use(bitvavoRouter);
+app.use(addressesRouter);
 
 // 404 handler
 app.use((_req, res) => {
