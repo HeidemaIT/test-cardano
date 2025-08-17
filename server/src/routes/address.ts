@@ -85,6 +85,22 @@ addressRouter.get(
           : [];
       const utxos: Utxo[] = Array.isArray(utxosRaw) ? (utxosRaw as Utxo[]) : [];
 
+      // Fetch exchange rates for USD and EUR
+      let usdRate = 1;
+      let eurRate = 1;
+      try {
+        const adaPriceRes = await fetch(
+          'https://api.coingecko.com/api/v3/simple/price?ids=cardano&vs_currencies=usd,eur',
+        );
+        if (adaPriceRes.ok) {
+          const adaPrice = await adaPriceRes.json();
+          usdRate = adaPrice.cardano?.usd || 1;
+          eurRate = adaPrice.cardano?.eur || 1;
+        }
+      } catch (error) {
+        console.error('Failed to fetch ADA exchange rates:', error);
+      }
+
       // Fetch asset metadata for user-friendly names
       const assetsWithMetadata = await Promise.all(
         assets.map(async (asset) => {
@@ -96,7 +112,9 @@ addressRouter.get(
             if (asset.asset_name && /^[0-9a-fA-F]+$/.test(asset.asset_name)) {
               // Convert hex to string
               const hexString = asset.asset_name;
-              const bytes = new Uint8Array(hexString.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []);
+              const bytes = new Uint8Array(
+                hexString.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) || [],
+              );
               const decoded = new TextDecoder().decode(bytes);
               if (decoded && decoded.trim() && !/[\x00-\x1F\x7F]/.test(decoded)) {
                 decodedName = decoded.trim();
@@ -124,7 +142,7 @@ addressRouter.get(
             if (metadataRes.ok) {
               const metadata = await metadataRes.json();
               console.log('Asset metadata response:', JSON.stringify(metadata, null, 2));
-              
+
               const assetInfo = Array.isArray(metadata) ? metadata[0] : metadata;
 
               // Extract user-friendly name from metadata
@@ -137,12 +155,21 @@ addressRouter.get(
                 displayName = assetInfo.ticker;
               }
 
+              // Calculate asset values in USD and EUR
+              const quantity = parseFloat(String(asset.quantity || 0));
+              const adaValue = quantity / Math.pow(10, 6); // Convert from lovelace to ADA
+              const usdValue = adaValue * usdRate;
+              const eurValue = adaValue * eurRate;
+
               return {
                 ...asset,
                 display_name: displayName,
                 ticker: assetInfo?.ticker,
                 decimals: assetInfo?.decimals,
                 logo: assetInfo?.logo,
+                ada_value: adaValue,
+                usd_value: usdValue,
+                eur_value: eurValue,
               };
             } else {
               console.log('Metadata request failed:', metadataRes.status, metadataRes.statusText);
@@ -156,10 +183,19 @@ addressRouter.get(
             );
           }
 
+          // Calculate asset values in USD and EUR for fallback case
+          const quantity = parseFloat(String(asset.quantity || 0));
+          const adaValue = quantity / Math.pow(10, 6); // Convert from lovelace to ADA
+          const usdValue = adaValue * usdRate;
+          const eurValue = adaValue * eurRate;
+
           // Return asset with decoded name as fallback
           return {
             ...asset,
             display_name: decodedName,
+            ada_value: adaValue,
+            usd_value: usdValue,
+            eur_value: eurValue,
           };
         }),
       );

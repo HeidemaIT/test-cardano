@@ -12,6 +12,9 @@ type AssetSummary = {
   decimals?: number;
   logo?: string;
   quantity?: string | number;
+  ada_value?: number;
+  usd_value?: number;
+  eur_value?: number;
   [key: string]: unknown;
 };
 
@@ -31,6 +34,17 @@ interface KoiosFormProps {
 }
 
 export function KoiosForm({ initialAddress }: KoiosFormProps) {
+  // Helper function to format currency values
+  const formatCurrency = (value: number | undefined, currency: 'USD' | 'EUR') => {
+    if (value === undefined || value === 0) return '-';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
+
   const [address, setAddress] = useState(initialAddress || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -183,6 +197,8 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
                     <TableCell>Display Name</TableCell>
                     {showTechnicalColumns && <TableCell>Ticker</TableCell>}
                     <TableCell>Quantity</TableCell>
+                    <TableCell>Value (USD)</TableCell>
+                    <TableCell>Value (EUR)</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -199,6 +215,12 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
                         <TableCell sx={{ wordBreak: 'break-all' }}>{String(a.ticker ?? '')}</TableCell>
                       )}
                       <TableCell sx={{ wordBreak: 'break-all' }}>{String(a.quantity ?? '')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                        {formatCurrency(a.usd_value, 'USD')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                        {formatCurrency(a.eur_value, 'EUR')}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
