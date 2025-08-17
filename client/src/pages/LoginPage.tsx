@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
-import { useTheme } from '../contexts/ThemeContext';
 import { 
   Alert, 
   Box, 
@@ -10,12 +9,8 @@ import {
   Container, 
   TextField, 
   Typography, 
-  AppBar, 
-  Toolbar, 
-  IconButton,
   Paper 
 } from '@mui/material';
-import { Brightness4, Brightness7 } from '@mui/icons-material';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -24,7 +19,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isDarkMode, toggleTheme } = useTheme();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -52,22 +46,6 @@ export default function LoginPage() {
 
   return (
     <>
-      <AppBar position="sticky">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Cardano Wallet Assets
-          </Typography>
-          <IconButton
-            color="inherit"
-            onClick={toggleTheme}
-            sx={{ ml: 1 }}
-            aria-label="toggle theme"
-          >
-            {isDarkMode ? <Brightness7 /> : <Brightness4 />}
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      
       <Container maxWidth="sm" sx={{ py: 8 }}>
         <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
           <Typography variant="h4" gutterBottom align="center" sx={{ mb: 4 }}>

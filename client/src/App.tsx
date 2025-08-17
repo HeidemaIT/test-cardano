@@ -56,12 +56,12 @@ function AppContent() {
 
   return (
     <>
-      <AppBar position="sticky">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Cardano Wallet Assets
-          </Typography>
-          {user && (
+      {user && (
+        <AppBar position="sticky">
+          <Toolbar>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              Cardano Wallet Assets
+            </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <IconButton
                 color="inherit"
@@ -89,9 +89,7 @@ function AppContent() {
                 Logout
               </Button>
             </Box>
-          )}
-        </Toolbar>
-        {user && (
+          </Toolbar>
           <Tabs
             value={currentTab}
             onChange={handleTabChange}
@@ -105,8 +103,8 @@ function AppContent() {
             <Tab value="custom" label="Custom" />
             <Tab value="bitvavo" label="Bitvavo" />
           </Tabs>
-        )}
-      </AppBar>
+        </AppBar>
+      )}
 
       <Box component="main" sx={{ flex: 1, minHeight: '100vh', width: '100%', bgcolor: 'background.default' }}>
         <Box sx={{ width: '100%' }}>
