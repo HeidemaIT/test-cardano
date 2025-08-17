@@ -12,24 +12,37 @@ import BitvavoPage from './pages/BitvavoPage';
 import LoginPage from './pages/LoginPage';
 
 function AppContent() {
-  const [, setProvider] = useState<'koios' | 'cardanoscan' | 'custom'>('koios');
+  const [, setProvider] = useState<'koios' | 'cardanoscan' | 'custom' | 'bitvavo'>('koios');
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   
   // Sync tab selection with route
-  const currentTab: 'home' | 'koios' | 'cardanoscan' | 'custom' =
+  const currentTab: 'home' | 'koios' | 'cardanoscan' | 'custom' | 'bitvavo' =
     location.pathname.startsWith('/cardanoscan')
       ? 'cardanoscan'
       : location.pathname.startsWith('/custom')
       ? 'custom'
       : location.pathname.startsWith('/koios')
       ? 'koios'
+      : location.pathname.startsWith('/bitvavo')
+      ? 'bitvavo'
       : 'home';
 
   const handleLogout = async () => {
     await signOut();
     navigate('/login');
+  };
+
+  const handleTabChange = (_e: React.SyntheticEvent, v: string) => {
+    setProvider(v as any);
+    navigate(
+      v === 'home' ? '/' : 
+      v === 'koios' ? '/koios' : 
+      v === 'cardanoscan' ? '/cardanoscan' : 
+      v === 'custom' ? '/custom' :
+      v === 'bitvavo' ? '/bitvavo' : '/'
+    );
   };
 
   return (
@@ -58,12 +71,7 @@ function AppContent() {
         {user && (
           <Tabs
             value={currentTab}
-            onChange={(_e, v) => {
-              setProvider(v);
-              navigate(
-                v === 'home' ? '/' : v === 'koios' ? '/koios' : v === 'cardanoscan' ? '/cardanoscan' : '/custom',
-              );
-            }}
+            onChange={handleTabChange}
             textColor="inherit"
             indicatorColor="secondary"
             sx={{ px: 2 }}
@@ -72,6 +80,7 @@ function AppContent() {
             <Tab value="koios" label="Koios" />
             <Tab value="cardanoscan" label="Cardanoscan" />
             <Tab value="custom" label="Custom" />
+            <Tab value="bitvavo" label="Bitvavo" />
           </Tabs>
         )}
       </AppBar>

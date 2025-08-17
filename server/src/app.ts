@@ -12,6 +12,7 @@ import { echoRouter } from './routes/echo';
 import { addressRouter } from './routes/address';
 import { customRouter } from './routes/custom';
 import { cardanoscanRouter } from './routes/cardanoscan';
+import { bitvavoRouter } from './routes/bitvavo';
 
 export const app = express();
 
@@ -67,6 +68,7 @@ app.use(echoRouter);
 app.use(addressRouter);
 app.use(customRouter);
 app.use(cardanoscanRouter);
+app.use(bitvavoRouter);
 
 // 404 handler
 app.use((_req, res) => {
