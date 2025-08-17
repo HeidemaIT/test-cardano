@@ -90,6 +90,23 @@ addressRouter.get(
         assets.map(async (asset) => {
           if (!asset.policy_id || !asset.asset_name) return asset;
 
+          // Try to decode hex asset names to readable text
+          let decodedName = asset.asset_name;
+          try {
+            if (asset.asset_name && /^[0-9a-fA-F]+$/.test(asset.asset_name)) {
+              // Convert hex to string
+              const hexString = asset.asset_name;
+              const bytes = new Uint8Array(hexString.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []);
+              const decoded = new TextDecoder().decode(bytes);
+              if (decoded && decoded.trim() && !/[\x00-\x1F\x7F]/.test(decoded)) {
+                decodedName = decoded.trim();
+              }
+            }
+          } catch (error) {
+            // If hex decoding fails, keep original name
+            console.error('Failed to decode hex asset name:', asset.asset_name, error);
+          }
+
           try {
             const metadataRes = await fetch('https://api.koios.rest/api/v1/asset_info', {
               method: 'POST',
@@ -106,10 +123,12 @@ addressRouter.get(
 
             if (metadataRes.ok) {
               const metadata = await metadataRes.json();
+              console.log('Asset metadata response:', JSON.stringify(metadata, null, 2));
+              
               const assetInfo = Array.isArray(metadata) ? metadata[0] : metadata;
 
               // Extract user-friendly name from metadata
-              let displayName = asset.asset_name;
+              let displayName = decodedName;
               if (assetInfo?.asset_name_ascii) {
                 displayName = assetInfo.asset_name_ascii;
               } else if (assetInfo?.asset_name_utf8) {
@@ -125,6 +144,8 @@ addressRouter.get(
                 decimals: assetInfo?.decimals,
                 logo: assetInfo?.logo,
               };
+            } else {
+              console.log('Metadata request failed:', metadataRes.status, metadataRes.statusText);
             }
           } catch (error) {
             console.error(
@@ -135,7 +156,11 @@ addressRouter.get(
             );
           }
 
-          return asset;
+          // Return asset with decoded name as fallback
+          return {
+            ...asset,
+            display_name: decodedName,
+          };
         }),
       );
 
