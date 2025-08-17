@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useSavedAddresses } from '../hooks/useSavedAddresses';
 import {
   Container,
   Typography,
@@ -17,6 +18,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Chip,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   Email as EmailIcon,
@@ -24,12 +28,17 @@ import {
   Security as SecurityIcon,
   Logout as LogoutIcon,
   ArrowBack as ArrowBackIcon,
+  AccountBalance as AccountBalanceIcon,
+  Close as CloseIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 
 export default function UserPage() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const { savedAddresses, removeAddress, clearAddresses } = useSavedAddresses();
 
   const handleLogout = async () => {
     await signOut();
@@ -38,6 +47,16 @@ export default function UserPage() {
 
   const handleBackToHome = () => {
     navigate('/');
+  };
+
+  const handleAddressClick = (address: string) => {
+    // Navigate to Koios page with the address pre-filled
+    navigate('/koios', { state: { selectedAddress: address } });
+  };
+
+  const handleClearAllAddresses = () => {
+    clearAddresses();
+    setShowClearDialog(false);
   };
 
   if (!user) {
@@ -92,6 +111,80 @@ export default function UserPage() {
         </List>
       </Paper>
 
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AccountBalanceIcon />
+            Saved Addresses
+          </Typography>
+          {savedAddresses.length > 0 && (
+            <Tooltip title="Clear all saved addresses">
+              <IconButton
+                size="small"
+                onClick={() => setShowClearDialog(true)}
+                color="error"
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+        <Divider sx={{ mb: 2 }} />
+        
+        {savedAddresses.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 3 }}>
+            <Typography color="text.secondary" variant="body2">
+              No saved addresses yet. Addresses will appear here after you successfully fetch data for them.
+            </Typography>
+          </Box>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {savedAddresses.map((address) => (
+              <Box
+                key={address}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  p: 1,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                  },
+                }}
+              >
+                <Chip
+                  label={address}
+                  size="small"
+                  clickable
+                  onClick={() => handleAddressClick(address)}
+                  sx={{
+                    flexGrow: 1,
+                    justifyContent: 'flex-start',
+                    '& .MuiChip-label': {
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    },
+                  }}
+                />
+                <Tooltip title="Remove address">
+                  <IconButton
+                    size="small"
+                    onClick={() => removeAddress(address)}
+                    color="error"
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Paper>
+
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <SecurityIcon />
@@ -132,6 +225,24 @@ export default function UserPage() {
           </Button>
           <Button onClick={handleLogout} color="error" variant="contained">
             Sign Out
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Clear All Addresses Confirmation Dialog */}
+      <Dialog open={showClearDialog} onClose={() => setShowClearDialog(false)}>
+        <DialogTitle>Clear All Saved Addresses</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to remove all saved addresses? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowClearDialog(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleClearAllAddresses} color="error" variant="contained">
+            Clear All
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Alert, Box, Button, Checkbox, FormControlLabel, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Snackbar } from '@mui/material';
 import { useSavedAddresses } from '../hooks/useSavedAddresses';
 import { SavedAddresses } from './SavedAddresses';
@@ -21,8 +21,12 @@ type Summary = {
   utxos?: Array<{ tx_hash?: string; tx_index?: number; value?: string | number }>;
 };
 
-export function KoiosForm() {
-  const [address, setAddress] = useState('');
+interface KoiosFormProps {
+  initialAddress?: string;
+}
+
+export function KoiosForm({ initialAddress }: KoiosFormProps) {
+  const [address, setAddress] = useState(initialAddress || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<Summary | null>(null);
@@ -31,6 +35,13 @@ export function KoiosForm() {
   const [lastSuccessfulAddress, setLastSuccessfulAddress] = useState<string>('');
 
   const { savedAddresses, addAddress, removeAddress, clearAddresses } = useSavedAddresses();
+
+  // Update address when initialAddress prop changes
+  useEffect(() => {
+    if (initialAddress) {
+      setAddress(initialAddress);
+    }
+  }, [initialAddress]);
 
   const apiBaseUrl = useMemo(() => {
     return (import.meta as unknown as { env: { VITE_API_BASE_URL?: string } }).env
