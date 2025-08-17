@@ -85,6 +85,60 @@ addressRouter.get(
           : [];
       const utxos: Utxo[] = Array.isArray(utxosRaw) ? (utxosRaw as Utxo[]) : [];
 
+      // Fetch asset metadata for user-friendly names
+      const assetsWithMetadata = await Promise.all(
+        assets.map(async (asset) => {
+          if (!asset.policy_id || !asset.asset_name) return asset;
+
+          try {
+            const metadataRes = await fetch('https://api.koios.rest/api/v1/asset_info', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({
+                _asset_list: [
+                  {
+                    policy_id: asset.policy_id,
+                    asset_name: asset.asset_name,
+                  },
+                ],
+              }),
+            });
+
+            if (metadataRes.ok) {
+              const metadata = await metadataRes.json();
+              const assetInfo = Array.isArray(metadata) ? metadata[0] : metadata;
+
+              // Extract user-friendly name from metadata
+              let displayName = asset.asset_name;
+              if (assetInfo?.asset_name_ascii) {
+                displayName = assetInfo.asset_name_ascii;
+              } else if (assetInfo?.asset_name_utf8) {
+                displayName = assetInfo.asset_name_utf8;
+              } else if (assetInfo?.ticker) {
+                displayName = assetInfo.ticker;
+              }
+
+              return {
+                ...asset,
+                display_name: displayName,
+                ticker: assetInfo?.ticker,
+                decimals: assetInfo?.decimals,
+                logo: assetInfo?.logo,
+              };
+            }
+          } catch (error) {
+            console.error(
+              'Failed to fetch metadata for asset:',
+              asset.policy_id,
+              asset.asset_name,
+              error,
+            );
+          }
+
+          return asset;
+        }),
+      );
+
       // Intentionally not logging Koios summary to reduce noise
 
       // If user is authenticated, save the address automatically
@@ -103,9 +157,9 @@ addressRouter.get(
         fetchedAt: new Date().toISOString(),
         info: infoFirst ?? infoRaw,
         utxosCount: utxos.length,
-        assetsCount: assets.length,
+        assetsCount: assetsWithMetadata.length,
         utxos,
-        assets,
+        assets: assetsWithMetadata,
         saved: req.user ? true : false,
       });
     } catch (err) {

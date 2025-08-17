@@ -7,6 +7,10 @@ import { supabase } from '../lib/supabase';
 type AssetSummary = {
   policy_id?: string;
   asset_name?: string;
+  display_name?: string;
+  ticker?: string;
+  decimals?: number;
+  logo?: string;
   quantity?: string | number;
   [key: string]: unknown;
 };
@@ -159,16 +163,20 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>policy_id</TableCell>
-                    <TableCell>asset_name</TableCell>
-                    <TableCell>quantity</TableCell>
+                    <TableCell>Policy ID</TableCell>
+                    <TableCell>Asset Name</TableCell>
+                    <TableCell>Display Name</TableCell>
+                    <TableCell>Ticker</TableCell>
+                    <TableCell>Quantity</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {summary.assets.map((a: AssetSummary, idx: number) => (
                     <TableRow key={idx}>
-                      <TableCell sx={{ wordBreak: 'break-all' }}>{String(a.policy_id ?? '')}</TableCell>
-                      <TableCell sx={{ wordBreak: 'break-all' }}>{String(a.asset_name ?? '')}</TableCell>
+                      <TableCell sx={{ wordBreak: 'break-all', fontSize: '0.75rem' }}>{String(a.policy_id ?? '')}</TableCell>
+                      <TableCell sx={{ wordBreak: 'break-all', fontSize: '0.75rem' }}>{String(a.asset_name ?? '')}</TableCell>
+                      <TableCell sx={{ wordBreak: 'break-all', fontWeight: 'bold' }}>{String(a.display_name ?? a.asset_name ?? '')}</TableCell>
+                      <TableCell sx={{ wordBreak: 'break-all' }}>{String(a.ticker ?? '')}</TableCell>
                       <TableCell sx={{ wordBreak: 'break-all' }}>{String(a.quantity ?? '')}</TableCell>
                     </TableRow>
                   ))}
