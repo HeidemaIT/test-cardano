@@ -36,6 +36,7 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<Summary | null>(null);
   const [raw, setRaw] = useState(false);
+  const [showTechnicalColumns, setShowTechnicalColumns] = useState(true);
   const [showSavePrompt, setShowSavePrompt] = useState(false);
   const [lastSuccessfulAddress, setLastSuccessfulAddress] = useState<string>('');
 
@@ -159,30 +160,51 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
           )}
 
           {!raw && 'assets' in summary && Array.isArray(summary.assets) && (
-            <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-              <Table size="small">
+            <Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                <Typography variant="subtitle2">Assets ({summary.assets.length})</Typography>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={showTechnicalColumns}
+                      onChange={(e) => setShowTechnicalColumns(e.target.checked)}
+                      size="small"
+                    />
+                  }
+                  label="Show technical details"
+                />
+              </Box>
+              <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+                <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Policy ID</TableCell>
-                    <TableCell>Asset Name</TableCell>
+                    {showTechnicalColumns && <TableCell>Policy ID</TableCell>}
+                    {showTechnicalColumns && <TableCell>Asset Name</TableCell>}
                     <TableCell>Display Name</TableCell>
-                    <TableCell>Ticker</TableCell>
+                    {showTechnicalColumns && <TableCell>Ticker</TableCell>}
                     <TableCell>Quantity</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {summary.assets.map((a: AssetSummary, idx: number) => (
                     <TableRow key={idx}>
-                      <TableCell sx={{ wordBreak: 'break-all', fontSize: '0.75rem' }}>{String(a.policy_id ?? '')}</TableCell>
-                      <TableCell sx={{ wordBreak: 'break-all', fontSize: '0.75rem' }}>{String(a.asset_name ?? '')}</TableCell>
+                      {showTechnicalColumns && (
+                        <TableCell sx={{ wordBreak: 'break-all', fontSize: '0.75rem' }}>{String(a.policy_id ?? '')}</TableCell>
+                      )}
+                      {showTechnicalColumns && (
+                        <TableCell sx={{ wordBreak: 'break-all', fontSize: '0.75rem' }}>{String(a.asset_name ?? '')}</TableCell>
+                      )}
                       <TableCell sx={{ wordBreak: 'break-all', fontWeight: 'bold' }}>{String(a.display_name ?? a.asset_name ?? '')}</TableCell>
-                      <TableCell sx={{ wordBreak: 'break-all' }}>{String(a.ticker ?? '')}</TableCell>
+                      {showTechnicalColumns && (
+                        <TableCell sx={{ wordBreak: 'break-all' }}>{String(a.ticker ?? '')}</TableCell>
+                      )}
                       <TableCell sx={{ wordBreak: 'break-all' }}>{String(a.quantity ?? '')}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </TableContainer>
+            </Box>
           )}
         </Box>
       ) : null}
