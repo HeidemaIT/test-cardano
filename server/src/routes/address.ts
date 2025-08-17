@@ -119,6 +119,36 @@ addressRouter.get(
         console.error('Failed to fetch ADA exchange rates:', error);
       }
 
+      // Fetch token prices from CoinGecko
+      const tokenPrices: Record<string, { usd: number; eur: number }> = {};
+      try {
+        // Common Cardano tokens that might be in the wallet
+        const tokenIds = [
+          'snek', 'hosky', 'xerberus', 'smartplaces-x', 'flywifhat', 'amelda'
+        ];
+        
+        const tokenPriceRes = await fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${tokenIds.join(',')}&vs_currencies=usd,eur`,
+        );
+        if (tokenPriceRes.ok) {
+          const tokenPriceData = await tokenPriceRes.json();
+          tokenPrices.cardano = { usd: usdRate, eur: eurRate };
+          
+          // Add individual token prices
+          Object.keys(tokenPriceData).forEach(tokenId => {
+            const price = tokenPriceData[tokenId];
+            tokenPrices[tokenId] = {
+              usd: price.usd || 0,
+              eur: price.eur || 0
+            };
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch token prices:', error);
+        // Fallback to ADA only
+        tokenPrices.cardano = { usd: usdRate, eur: eurRate };
+      }
+
       // Fetch asset metadata for user-friendly names
       const assetsWithMetadata = await Promise.all(
                 assets.map(async (asset) => {
@@ -129,8 +159,8 @@ addressRouter.get(
             // Handle ADA asset
             const quantity = parseFloat(String(asset.quantity || 0));
             const adaValue = quantity; // Already in ADA units
-            const usdValue = adaValue * usdRate;
-            const eurValue = adaValue * eurRate;
+            const usdValue = adaValue * tokenPrices.cardano.usd;
+            const eurValue = adaValue * tokenPrices.cardano.eur;
 
             return {
               ...asset,
@@ -192,7 +222,7 @@ addressRouter.get(
                 displayName = assetInfo.ticker;
               }
 
-              // Calculate asset values in USD and EUR (only for ADA)
+              // Calculate asset values in USD and EUR
               const quantity = parseFloat(String(asset.quantity || 0));
               let adaValue = 0;
               let usdValue = 0;
@@ -201,9 +231,18 @@ addressRouter.get(
               // Check if this is ADA (policy_id is undefined and asset_name is empty)
               const isADA = asset.policy_id === undefined && asset.asset_name === '';
               if (isADA) {
-                adaValue = quantity / Math.pow(10, 6); // Convert from lovelace to ADA
-                usdValue = adaValue * usdRate;
-                eurValue = adaValue * eurRate;
+                adaValue = quantity; // Already in ADA units
+                usdValue = adaValue * tokenPrices.cardano.usd;
+                eurValue = adaValue * tokenPrices.cardano.eur;
+              } else {
+                // Try to find token price by ticker or display name
+                const ticker = assetInfo?.ticker?.toLowerCase() || displayName.toLowerCase();
+                const tokenPrice = tokenPrices[ticker] || tokenPrices[displayName.toLowerCase()];
+                
+                if (tokenPrice) {
+                  usdValue = quantity * tokenPrice.usd;
+                  eurValue = quantity * tokenPrice.eur;
+                }
               }
 
               return {
@@ -228,7 +267,7 @@ addressRouter.get(
             );
           }
 
-                    // Calculate asset values in USD and EUR for fallback case (only for ADA)
+                    // Calculate asset values in USD and EUR for fallback case
           const quantity = parseFloat(String(asset.quantity || 0));
           let adaValue = 0;
           let usdValue = 0;
@@ -238,8 +277,15 @@ addressRouter.get(
           const isADAAsset = asset.policy_id === undefined && asset.asset_name === '';
           if (isADAAsset) {
             adaValue = quantity; // Already in ADA units
-            usdValue = adaValue * usdRate;
-            eurValue = adaValue * eurRate;
+            usdValue = adaValue * tokenPrices.cardano.usd;
+            eurValue = adaValue * tokenPrices.cardano.eur;
+          } else {
+            // Try to find token price by display name
+            const tokenPrice = tokenPrices[decodedName.toLowerCase()];
+            if (tokenPrice) {
+              usdValue = quantity * tokenPrice.usd;
+              eurValue = quantity * tokenPrice.eur;
+            }
           }
 
           // Return asset with decoded name as fallback
