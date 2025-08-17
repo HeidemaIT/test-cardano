@@ -4,7 +4,7 @@ import { Alert, Box, Button, Checkbox, FormControlLabel, Paper, TextField, Typog
 type ResponseShape = unknown;
 
 export function BitvavoForm() {
-  const [address, setAddress] = useState('addr1...');
+  const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ResponseShape | null>(null);

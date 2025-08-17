@@ -20,7 +20,7 @@ type Summary = {
 };
 
 export function KoiosForm() {
-  const [address, setAddress] = useState('addr1...');
+  const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<Summary | null>(null);
