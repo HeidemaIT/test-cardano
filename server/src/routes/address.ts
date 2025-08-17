@@ -135,8 +135,8 @@ addressRouter.get(
           tokenPrices.cardano = { usd: usdRate, eur: eurRate };
           
           // Add individual token prices
-          Object.keys(tokenPriceData).forEach(tokenId => {
-            const price = tokenPriceData[tokenId];
+          Object.keys(tokenPriceData as Record<string, any>).forEach(tokenId => {
+            const price = (tokenPriceData as Record<string, any>)[tokenId];
             tokenPrices[tokenId] = {
               usd: price.usd || 0,
               eur: price.eur || 0
@@ -245,12 +245,38 @@ addressRouter.get(
                 }
               }
 
+              // Apply decimal places to quantity if available
+              let formattedQuantity = asset.quantity;
+              if (assetInfo?.decimals !== undefined && assetInfo.decimals > 0) {
+                const rawQuantity = parseFloat(String(asset.quantity || 0));
+                formattedQuantity = (rawQuantity / Math.pow(10, assetInfo.decimals)).toString();
+              } else {
+                // Fallback: apply known decimal places for common tokens
+                const knownDecimals: Record<string, number> = {
+                  'XER': 6,
+                  'SPX': 6,
+                  'HOSKY': 0,
+                  'SNEK': 0,
+                  'flywifhat': 0,
+                  'AMELD': 0,
+                  'aMIN': 0,
+                };
+                
+                const tokenName = displayName.toUpperCase();
+                const decimals = knownDecimals[tokenName];
+                if (decimals !== undefined) {
+                  const rawQuantity = parseFloat(String(asset.quantity || 0));
+                  formattedQuantity = (rawQuantity / Math.pow(10, decimals)).toString();
+                }
+              }
+
               return {
                 ...asset,
                 display_name: displayName,
                 ticker: assetInfo?.ticker,
                 decimals: assetInfo?.decimals,
                 logo: assetInfo?.logo,
+                quantity: formattedQuantity,
                 ada_value: adaValue,
                 usd_value: usdValue,
                 eur_value: eurValue,

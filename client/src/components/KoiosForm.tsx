@@ -50,7 +50,21 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
     if (value === undefined || value === null) return '';
     const num = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(num)) return String(value);
-    return new Intl.NumberFormat('en-US').format(num);
+    
+    // Check if the original value has decimal places
+    const originalStr = String(value);
+    const hasDecimals = originalStr.includes('.');
+    
+    if (hasDecimals) {
+      // For decimal numbers, preserve the decimal format
+      return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 6,
+      }).format(num);
+    } else {
+      // For whole numbers, add commas
+      return new Intl.NumberFormat('en-US').format(num);
+    }
   };
 
   const [address, setAddress] = useState(initialAddress || '');
