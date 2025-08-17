@@ -80,6 +80,11 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
 
           const { savedAddresses, addAddress, removeAddress, clearAddresses } = useServerSavedAddresses();
 
+  const apiBaseUrl = useMemo(() => {
+    return (import.meta as unknown as { env: { VITE_API_BASE_URL?: string } }).env
+      .VITE_API_BASE_URL ?? 'http://localhost:3000';
+  }, []);
+
   // Update address when initialAddress prop changes and auto-fetch if provided
   useEffect(() => {
     if (initialAddress) {
@@ -131,11 +136,6 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
       }
     }
   }, [initialAddress, apiBaseUrl, raw, savedAddresses]);
-
-  const apiBaseUrl = useMemo(() => {
-    return (import.meta as unknown as { env: { VITE_API_BASE_URL?: string } }).env
-      .VITE_API_BASE_URL ?? 'http://localhost:3000';
-  }, []);
 
     async function fetchAssets() {
     setLoading(true);
