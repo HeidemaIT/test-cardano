@@ -72,7 +72,7 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<Summary | null>(null);
   const [raw, setRaw] = useState(false);
-  const [showTechnicalColumns, setShowTechnicalColumns] = useState(true);
+  const [showTechnicalColumns, setShowTechnicalColumns] = useState(false);
   const [showSavePrompt, setShowSavePrompt] = useState(false);
   const [lastSuccessfulAddress, setLastSuccessfulAddress] = useState<string>('');
 
