@@ -12,9 +12,7 @@ addressesRouter.use(authMiddleware.authenticate);
 // Schema for saving an address
 const SaveAddressSchema = z.object({
   address: z.string().min(10, 'Address must be at least 10 characters'),
-  provider: z.enum(['koios', 'cardanoscan', 'custom', 'bitvavo'], {
-    errorMap: () => ({ message: 'Provider must be one of: koios, cardanoscan, custom, bitvavo' }),
-  }),
+  provider: z.enum(['koios', 'cardanoscan', 'custom', 'bitvavo']),
 });
 
 // Get all saved addresses for the authenticated user
@@ -73,7 +71,7 @@ addressesRouter.post('/addresses', authMiddleware.requireAuth, async (req, res) 
     if (!validation.success) {
       return res.status(400).json({
         error: 'Validation error',
-        message: validation.error.errors[0].message,
+        message: validation.error.issues[0].message,
       });
     }
 

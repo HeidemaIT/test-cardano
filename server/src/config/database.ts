@@ -20,9 +20,32 @@ if (!fs.existsSync(dbDir)) {
 const db = new sqlite3.Database(dbPath);
 
 // Promisify database methods
-const dbRun = promisify(db.run.bind(db));
-const dbGet = promisify(db.get.bind(db));
-const dbAll = promisify(db.all.bind(db));
+const dbRun = (sql: string, params?: unknown[]) => {
+  return new Promise<{ changes: number }>((resolve, reject) => {
+    db.run(sql, params, function(err) {
+      if (err) reject(err);
+      else resolve({ changes: this.changes });
+    });
+  });
+};
+
+const dbGet = (sql: string, params?: unknown[]) => {
+  return new Promise<unknown>((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+};
+
+const dbAll = (sql: string, params?: unknown[]) => {
+  return new Promise<unknown[]>((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows || []);
+    });
+  });
+};
 
 // Initialize tables
 async function initializeDatabase() {
