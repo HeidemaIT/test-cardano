@@ -122,6 +122,11 @@ function AppContent() {
                 <KoiosPage />
               </ProtectedRoute>
             } />
+            <Route path="/koios/:address" element={
+              <ProtectedRoute>
+                <KoiosPage />
+              </ProtectedRoute>
+            } />
             <Route path="/cardanoscan" element={
               <ProtectedRoute>
                 <CardanoscanPage />

@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, Checkbox, FormControlLabel, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Snackbar } from '@mui/material';
 import { useServerSavedAddresses } from '../hooks/useServerSavedAddresses';
 import { SavedAddresses } from './SavedAddresses';
@@ -34,6 +35,7 @@ interface KoiosFormProps {
 }
 
 export function KoiosForm({ initialAddress }: KoiosFormProps) {
+  const navigate = useNavigate();
   // Helper function to format currency values
   const formatCurrency = (value: number | undefined, currency: 'USD' | 'EUR') => {
     if (value === undefined || value === 0) return 'N/A';
@@ -78,12 +80,57 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
 
           const { savedAddresses, addAddress, removeAddress, clearAddresses } = useServerSavedAddresses();
 
-  // Update address when initialAddress prop changes
+  // Update address when initialAddress prop changes and auto-fetch if provided
   useEffect(() => {
     if (initialAddress) {
       setAddress(initialAddress);
+      // Auto-fetch data if we have an initial address
+      if (initialAddress.trim()) {
+        // Use setTimeout to ensure the address state is updated first
+        setTimeout(() => {
+          // Create a temporary function to avoid dependency issues
+          const tempFetch = async () => {
+            setLoading(true);
+            setError(null);
+            setData(null);
+            try {
+              const url = new URL(`${apiBaseUrl}/address/${initialAddress}/assets`);
+              if (raw) url.searchParams.set('raw', '1');
+              
+              // Get auth headers
+              const { data: { session } } = await supabase.auth.getSession();
+              const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+              };
+              
+              if (session?.access_token) {
+                headers['Authorization'] = `Bearer ${session.access_token}`;
+              }
+              
+              const res = await fetch(url.toString(), { headers });
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              const result = await res.json() as Summary;
+              setData(result);
+
+              // Show save prompt if this is a new address and it was successfully saved
+              if (result.address && result.saved) {
+                const isAlreadySaved = savedAddresses.some(addr => addr.address === result.address);
+                if (!isAlreadySaved) {
+                  setLastSuccessfulAddress(result.address);
+                  setShowSavePrompt(true);
+                }
+              }
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Unknown error');
+            } finally {
+              setLoading(false);
+            }
+          };
+          tempFetch();
+        }, 0);
+      }
     }
-  }, [initialAddress]);
+  }, [initialAddress, apiBaseUrl, raw, savedAddresses]);
 
   const apiBaseUrl = useMemo(() => {
     return (import.meta as unknown as { env: { VITE_API_BASE_URL?: string } }).env
@@ -112,6 +159,11 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const result = await res.json() as Summary;
       setData(result);
+
+      // Update URL to include the address for bookmarking/sharing
+      if (result.address) {
+        navigate(`/koios/${encodeURIComponent(result.address)}`, { replace: true });
+      }
 
       // Show save prompt if this is a new address and it was successfully saved
       if (result.address && result.saved) {
@@ -143,6 +195,8 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
 
           const handleAddressClick = (clickedAddress: string) => {
           setAddress(clickedAddress);
+          // Navigate to URL with address for bookmarking/sharing
+          navigate(`/koios/${encodeURIComponent(clickedAddress)}`);
         };
 
         const handleAddressRemove = async (addressToRemove: string) => {
