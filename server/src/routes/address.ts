@@ -78,12 +78,30 @@ addressRouter.get(
         value?: string | number;
         [k: string]: unknown;
       };
+      const utxos: Utxo[] = Array.isArray(utxosRaw) ? (utxosRaw as Utxo[]) : [];
+
+      // Calculate total ADA from UTXOs
+      const totalADA = utxos.reduce((sum, utxo) => {
+        const value = parseFloat(String(utxo.value || 0));
+        return sum + value;
+      }, 0);
+      const adaValue = totalADA / Math.pow(10, 6); // Convert from lovelace to ADA
+
       const assets: Asset[] = Array.isArray(assetsFirst?.asset_list)
         ? (assetsFirst.asset_list as Asset[])
         : Array.isArray(assetsRaw)
           ? (assetsRaw as Asset[])
           : [];
-      const utxos: Utxo[] = Array.isArray(utxosRaw) ? (utxosRaw as Utxo[]) : [];
+
+      // Add ADA as the first asset if there's any ADA
+      if (adaValue > 0) {
+        const adaAsset: Asset = {
+          policy_id: undefined,
+          asset_name: '',
+          quantity: totalADA.toString(),
+        };
+        assets.unshift(adaAsset);
+      }
 
       // Fetch exchange rates for USD and EUR
       let usdRate = 1;
@@ -94,8 +112,8 @@ addressRouter.get(
         );
         if (adaPriceRes.ok) {
           const adaPrice = await adaPriceRes.json();
-          usdRate = adaPrice.cardano?.usd || 1;
-          eurRate = adaPrice.cardano?.eur || 1;
+          usdRate = (adaPrice as any).cardano?.usd || 1;
+          eurRate = (adaPrice as any).cardano?.eur || 1;
         }
       } catch (error) {
         console.error('Failed to fetch ADA exchange rates:', error);
@@ -103,7 +121,26 @@ addressRouter.get(
 
       // Fetch asset metadata for user-friendly names
       const assetsWithMetadata = await Promise.all(
-        assets.map(async (asset) => {
+                assets.map(async (asset) => {
+          // Check if this is ADA (policy_id is undefined and asset_name is empty)
+          const isADA = asset.policy_id === undefined && asset.asset_name === '';
+          
+          if (isADA) {
+            // Handle ADA asset
+            const quantity = parseFloat(String(asset.quantity || 0));
+            const adaValue = quantity / Math.pow(10, 6); // Convert from lovelace to ADA
+            const usdValue = adaValue * usdRate;
+            const eurValue = adaValue * eurRate;
+
+            return {
+              ...asset,
+              display_name: 'ADA',
+              ada_value: adaValue,
+              usd_value: usdValue,
+              eur_value: eurValue,
+            };
+          }
+
           if (!asset.policy_id || !asset.asset_name) return asset;
 
           // Try to decode hex asset names to readable text
@@ -160,9 +197,9 @@ addressRouter.get(
               let adaValue = 0;
               let usdValue = 0;
               let eurValue = 0;
-              
-              // Check if this is ADA (policy_id: "lovelace" or empty asset_name)
-              const isADA = !asset.policy_id || asset.policy_id === 'lovelace' || asset.asset_name === '';
+
+              // Check if this is ADA (policy_id is undefined and asset_name is empty)
+              const isADA = asset.policy_id === undefined && asset.asset_name === '';
               if (isADA) {
                 adaValue = quantity / Math.pow(10, 6); // Convert from lovelace to ADA
                 usdValue = adaValue * usdRate;
@@ -191,15 +228,15 @@ addressRouter.get(
             );
           }
 
-          // Calculate asset values in USD and EUR for fallback case (only for ADA)
+                    // Calculate asset values in USD and EUR for fallback case (only for ADA)
           const quantity = parseFloat(String(asset.quantity || 0));
           let adaValue = 0;
           let usdValue = 0;
           let eurValue = 0;
           
-          // Check if this is ADA (policy_id: "lovelace" or empty asset_name)
-          const isADA = !asset.policy_id || asset.policy_id === 'lovelace' || asset.asset_name === '';
-          if (isADA) {
+          // Check if this is ADA (policy_id is undefined and asset_name is empty)
+          const isADAAsset = asset.policy_id === undefined && asset.asset_name === '';
+          if (isADAAsset) {
             adaValue = quantity / Math.pow(10, 6); // Convert from lovelace to ADA
             usdValue = adaValue * usdRate;
             eurValue = adaValue * eurRate;
