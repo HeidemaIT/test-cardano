@@ -155,11 +155,19 @@ addressRouter.get(
                 displayName = assetInfo.ticker;
               }
 
-              // Calculate asset values in USD and EUR
+              // Calculate asset values in USD and EUR (only for ADA)
               const quantity = parseFloat(String(asset.quantity || 0));
-              const adaValue = quantity / Math.pow(10, 6); // Convert from lovelace to ADA
-              const usdValue = adaValue * usdRate;
-              const eurValue = adaValue * eurRate;
+              let adaValue = 0;
+              let usdValue = 0;
+              let eurValue = 0;
+              
+              // Check if this is ADA (policy_id: "lovelace" or empty asset_name)
+              const isADA = !asset.policy_id || asset.policy_id === 'lovelace' || asset.asset_name === '';
+              if (isADA) {
+                adaValue = quantity / Math.pow(10, 6); // Convert from lovelace to ADA
+                usdValue = adaValue * usdRate;
+                eurValue = adaValue * eurRate;
+              }
 
               return {
                 ...asset,
@@ -183,11 +191,19 @@ addressRouter.get(
             );
           }
 
-          // Calculate asset values in USD and EUR for fallback case
+          // Calculate asset values in USD and EUR for fallback case (only for ADA)
           const quantity = parseFloat(String(asset.quantity || 0));
-          const adaValue = quantity / Math.pow(10, 6); // Convert from lovelace to ADA
-          const usdValue = adaValue * usdRate;
-          const eurValue = adaValue * eurRate;
+          let adaValue = 0;
+          let usdValue = 0;
+          let eurValue = 0;
+          
+          // Check if this is ADA (policy_id: "lovelace" or empty asset_name)
+          const isADA = !asset.policy_id || asset.policy_id === 'lovelace' || asset.asset_name === '';
+          if (isADA) {
+            adaValue = quantity / Math.pow(10, 6); // Convert from lovelace to ADA
+            usdValue = adaValue * usdRate;
+            eurValue = adaValue * eurRate;
+          }
 
           // Return asset with decoded name as fallback
           return {

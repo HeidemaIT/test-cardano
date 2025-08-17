@@ -36,7 +36,7 @@ interface KoiosFormProps {
 export function KoiosForm({ initialAddress }: KoiosFormProps) {
   // Helper function to format currency values
   const formatCurrency = (value: number | undefined, currency: 'USD' | 'EUR') => {
-    if (value === undefined || value === 0) return '-';
+    if (value === undefined || value === 0) return 'N/A';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency,
