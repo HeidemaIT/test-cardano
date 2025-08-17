@@ -20,7 +20,9 @@ bitvavoRouter.get(
     const { addr } = req.params as { addr: string };
 
     // Debug logging
-    console.log('Bitvavo route called for address:', addr);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Bitvavo route called for address:', addr);
+    }
 
     // Bitvavo provider is not implemented yet
     // If user is authenticated, save the address automatically (even though it's not implemented)

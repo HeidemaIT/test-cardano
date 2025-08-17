@@ -19,10 +19,12 @@ customRouter.get('/custom/:addr/assets', validateParams(AddressParamsSchema), as
   const raw = req.query.raw === '1' || req.query.raw === 'true';
 
   // Debug logging
-  console.log('Custom environment variables:');
-  console.log('CUSTOM_INFO_URL:', env.CUSTOM_INFO_URL);
-  console.log('CUSTOM_UTXOS_URL:', env.CUSTOM_UTXOS_URL);
-  console.log('CUSTOM_ASSETS_URL:', env.CUSTOM_ASSETS_URL);
+      if (process.env.NODE_ENV === 'development') {
+      console.log('Custom environment variables:');
+      console.log('CUSTOM_INFO_URL:', env.CUSTOM_INFO_URL);
+      console.log('CUSTOM_UTXOS_URL:', env.CUSTOM_UTXOS_URL);
+      console.log('CUSTOM_ASSETS_URL:', env.CUSTOM_ASSETS_URL);
+    }
 
   if (!env.CUSTOM_INFO_URL || !env.CUSTOM_UTXOS_URL || !env.CUSTOM_ASSETS_URL) {
     return res.status(501).json({

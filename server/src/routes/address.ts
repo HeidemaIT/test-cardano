@@ -212,7 +212,9 @@ addressRouter.get(
 
             if (metadataRes.ok) {
               const metadata = await metadataRes.json();
-              console.log('Asset metadata response:', JSON.stringify(metadata, null, 2));
+              if (process.env.NODE_ENV === 'development') {
+                console.log('Asset metadata response:', JSON.stringify(metadata, null, 2));
+              }
 
               const assetInfo = Array.isArray(metadata) ? metadata[0] : metadata;
 
@@ -251,13 +253,17 @@ addressRouter.get(
 
               // Apply decimal places to quantity if available
               let formattedQuantity = asset.quantity;
-              console.log(
-                `Processing ${displayName}: decimals=${assetInfo?.decimals}, quantity=${asset.quantity}`,
-              );
+              if (process.env.NODE_ENV === 'development') {
+                console.log(
+                  `Processing ${displayName}: decimals=${assetInfo?.decimals}, quantity=${asset.quantity}`,
+                );
+              }
               if (assetInfo?.decimals !== undefined && assetInfo.decimals > 0) {
                 const rawQuantity = parseFloat(String(asset.quantity || 0));
                 formattedQuantity = (rawQuantity / Math.pow(10, assetInfo.decimals)).toString();
-                console.log(`Applied decimals: ${asset.quantity} -> ${formattedQuantity}`);
+                if (process.env.NODE_ENV === 'development') {
+                  console.log(`Applied decimals: ${asset.quantity} -> ${formattedQuantity}`);
+                }
               } else {
                 // Fallback: apply known decimal places for common tokens
                 const knownDecimals: Record<string, number> = {
@@ -290,7 +296,9 @@ addressRouter.get(
                 eur_value: eurValue,
               };
             } else {
-              console.log('Metadata request failed:', metadataRes.status, metadataRes.statusText);
+              if (process.env.NODE_ENV === 'development') {
+                console.log('Metadata request failed:', metadataRes.status, metadataRes.statusText);
+              }
             }
           } catch (error) {
             console.error(

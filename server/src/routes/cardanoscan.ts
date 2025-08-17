@@ -21,23 +21,33 @@ cardanoscanRouter.get(
     const { addr } = req.params as { addr: string };
     const raw = req.query.raw === '1' || req.query.raw === 'true';
 
-    // Debug logging
-    console.log('Cardanoscan environment variables:');
-    console.log('CARDANOSCAN_INFO_URL_TEMPLATE:', env.CARDANOSCAN_INFO_URL_TEMPLATE);
-    console.log('CARDANOSCAN_UTXOS_URL_TEMPLATE:', env.CARDANOSCAN_UTXOS_URL_TEMPLATE);
-    console.log('CARDANOSCAN_ASSETS_URL_TEMPLATE:', env.CARDANOSCAN_ASSETS_URL_TEMPLATE);
-    console.log('CARDANOSCAN_BASE_URL:', env.CARDANOSCAN_BASE_URL);
-    console.log('CARDANOSCAN_API_KEY:', env.CARDANOSCAN_API_KEY ? '***' : 'not set');
+    // Debug logging (development only)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Cardanoscan environment variables:');
+      console.log('CARDANOSCAN_INFO_URL_TEMPLATE:', env.CARDANOSCAN_INFO_URL_TEMPLATE);
+      console.log('CARDANOSCAN_UTXOS_URL_TEMPLATE:', env.CARDANOSCAN_UTXOS_URL_TEMPLATE);
+      console.log('CARDANOSCAN_ASSETS_URL_TEMPLATE:', env.CARDANOSCAN_ASSETS_URL_TEMPLATE);
+      console.log('CARDANOSCAN_BASE_URL:', env.CARDANOSCAN_BASE_URL);
+      console.log('CARDANOSCAN_API_KEY:', env.CARDANOSCAN_API_KEY ? '***' : 'not set');
+    }
 
-    // Temporary hardcoded URLs for testing
-    const infoUrl = `https://api.cardanoscan.io/api/v1/address/${encodeURIComponent(addr)}/info`;
-    const utxosUrl = `https://api.cardanoscan.io/api/v1/address/${encodeURIComponent(addr)}/utxos`;
-    const assetsUrl = `https://api.cardanoscan.io/api/v1/address/${encodeURIComponent(addr)}/assets`;
+    // Build URLs from environment variables or use defaults
+    const infoUrl = env.CARDANOSCAN_INFO_URL_TEMPLATE 
+      ? env.CARDANOSCAN_INFO_URL_TEMPLATE.replace('{address}', encodeURIComponent(addr))
+      : `https://api.cardanoscan.io/api/v1/address/${encodeURIComponent(addr)}/info`;
+    const utxosUrl = env.CARDANOSCAN_UTXOS_URL_TEMPLATE
+      ? env.CARDANOSCAN_UTXOS_URL_TEMPLATE.replace('{address}', encodeURIComponent(addr))
+      : `https://api.cardanoscan.io/api/v1/address/${encodeURIComponent(addr)}/utxos`;
+    const assetsUrl = env.CARDANOSCAN_ASSETS_URL_TEMPLATE
+      ? env.CARDANOSCAN_ASSETS_URL_TEMPLATE.replace('{address}', encodeURIComponent(addr))
+      : `https://api.cardanoscan.io/api/v1/address/${encodeURIComponent(addr)}/assets`;
 
-    console.log('Built URLs:');
-    console.log('infoUrl:', infoUrl);
-    console.log('utxosUrl:', utxosUrl);
-    console.log('assetsUrl:', assetsUrl);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Built URLs:');
+      console.log('infoUrl:', infoUrl);
+      console.log('utxosUrl:', utxosUrl);
+      console.log('assetsUrl:', assetsUrl);
+    }
 
     const headers: Record<string, string> = {};
     if (env.CARDANOSCAN_API_KEY) headers['authorization'] = `Bearer ${env.CARDANOSCAN_API_KEY}`;
