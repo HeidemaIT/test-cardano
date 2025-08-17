@@ -155,12 +155,12 @@ addressRouter.get(
           // Check if this is ADA (policy_id is undefined and asset_name is empty)
           const isADA = asset.policy_id === undefined && asset.asset_name === '';
           
-          if (isADA) {
-            // Handle ADA asset
-            const quantity = parseFloat(String(asset.quantity || 0));
-            const adaValue = quantity; // Already in ADA units
-            const usdValue = adaValue * tokenPrices.cardano.usd;
-            const eurValue = adaValue * tokenPrices.cardano.eur;
+                        if (isADA) {
+                // Handle ADA asset
+                const quantity = parseFloat(String(asset.quantity || 0));
+                const adaValue = quantity; // Already in ADA units
+                const usdValue = adaValue * (tokenPrices.cardano?.usd || 0);
+                const eurValue = adaValue * (tokenPrices.cardano?.eur || 0);
 
             return {
               ...asset,
@@ -247,9 +247,11 @@ addressRouter.get(
 
               // Apply decimal places to quantity if available
               let formattedQuantity = asset.quantity;
+              console.log(`Processing ${displayName}: decimals=${assetInfo?.decimals}, quantity=${asset.quantity}`);
               if (assetInfo?.decimals !== undefined && assetInfo.decimals > 0) {
                 const rawQuantity = parseFloat(String(asset.quantity || 0));
                 formattedQuantity = (rawQuantity / Math.pow(10, assetInfo.decimals)).toString();
+                console.log(`Applied decimals: ${asset.quantity} -> ${formattedQuantity}`);
               } else {
                 // Fallback: apply known decimal places for common tokens
                 const knownDecimals: Record<string, number> = {
@@ -303,8 +305,8 @@ addressRouter.get(
           const isADAAsset = asset.policy_id === undefined && asset.asset_name === '';
           if (isADAAsset) {
             adaValue = quantity; // Already in ADA units
-            usdValue = adaValue * tokenPrices.cardano.usd;
-            eurValue = adaValue * tokenPrices.cardano.eur;
+            usdValue = adaValue * (tokenPrices.cardano?.usd || 0);
+            eurValue = adaValue * (tokenPrices.cardano?.eur || 0);
           } else {
             // Try to find token price by display name
             const tokenPrice = tokenPrices[decodedName.toLowerCase()];
