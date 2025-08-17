@@ -98,7 +98,7 @@ addressRouter.get(
         const adaAsset: Asset = {
           policy_id: undefined,
           asset_name: '',
-          quantity: totalADA.toString(),
+          quantity: adaValue.toString(), // Store in ADA units, not lovelace
         };
         assets.unshift(adaAsset);
       }
@@ -128,7 +128,7 @@ addressRouter.get(
           if (isADA) {
             // Handle ADA asset
             const quantity = parseFloat(String(asset.quantity || 0));
-            const adaValue = quantity / Math.pow(10, 6); // Convert from lovelace to ADA
+            const adaValue = quantity; // Already in ADA units
             const usdValue = adaValue * usdRate;
             const eurValue = adaValue * eurRate;
 
@@ -237,7 +237,7 @@ addressRouter.get(
           // Check if this is ADA (policy_id is undefined and asset_name is empty)
           const isADAAsset = asset.policy_id === undefined && asset.asset_name === '';
           if (isADAAsset) {
-            adaValue = quantity / Math.pow(10, 6); // Convert from lovelace to ADA
+            adaValue = quantity; // Already in ADA units
             usdValue = adaValue * usdRate;
             eurValue = adaValue * eurRate;
           }
