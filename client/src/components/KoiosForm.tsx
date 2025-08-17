@@ -28,6 +28,7 @@ type Summary = {
   info?: Record<string, unknown>;
   assets?: AssetSummary[];
   utxos?: Array<{ tx_hash?: string; tx_index?: number; value?: string | number }>;
+  saved?: boolean;
 };
 
 interface KoiosFormProps {

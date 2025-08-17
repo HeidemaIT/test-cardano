@@ -5,7 +5,7 @@ import { Brightness4, Brightness7 } from '@mui/icons-material';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
-import { useTheme } from './contexts/ThemeContext';
+import { useTheme } from './hooks/useTheme';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import Home from './pages/Home';
 import KoiosPage from './pages/KoiosPage';

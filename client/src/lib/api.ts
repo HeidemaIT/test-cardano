@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import type { SavedAddress } from '../hooks/useServerSavedAddresses';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
@@ -8,6 +9,10 @@ export interface ApiResponse<T = unknown> {
   error?: string;
   message?: string;
   [key: string]: unknown;
+}
+
+export interface CheckAddressResponse {
+  isSaved: boolean;
 }
 
 class ApiClient {
@@ -89,15 +94,15 @@ class ApiClient {
 
   // Specific methods for saved addresses
   async getSavedAddresses() {
-    return this.get('/addresses');
+    return this.get<SavedAddress[]>('/addresses');
   }
 
   async getSavedAddressesByProvider(provider: string) {
-    return this.get(`/addresses/${provider}`);
+    return this.get<SavedAddress[]>(`/addresses/${provider}`);
   }
 
   async saveAddress(address: string, provider: string) {
-    return this.post('/addresses', { address, provider });
+    return this.post<SavedAddress>('/addresses', { address, provider });
   }
 
   async removeAddress(address: string, provider: string) {
@@ -109,7 +114,7 @@ class ApiClient {
   }
 
   async checkAddressSaved(address: string, provider: string) {
-    return this.get(`/addresses/${provider}/${encodeURIComponent(address)}/check`);
+    return this.get<CheckAddressResponse>(`/addresses/${provider}/${encodeURIComponent(address)}/check`);
   }
 }
 

@@ -106,7 +106,7 @@ export function useServerSavedAddresses() {
 
     try {
       const response = await apiClient.checkAddressSaved(address, provider);
-      return response.success && response.data?.isSaved === true;
+      return Boolean(response.success && response.data?.isSaved);
     } catch (err) {
       console.error('Failed to check if address is saved:', err);
       return false;
