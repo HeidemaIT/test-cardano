@@ -1,5 +1,4 @@
 import sqlite3 from 'sqlite3';
-import { promisify } from 'util';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -22,7 +21,7 @@ const db = new sqlite3.Database(dbPath);
 // Promisify database methods
 const dbRun = (sql: string, params?: unknown[]) => {
   return new Promise<{ changes: number }>((resolve, reject) => {
-    db.run(sql, params, function(err) {
+    db.run(sql, params, function (err) {
       if (err) reject(err);
       else resolve({ changes: this.changes });
     });
