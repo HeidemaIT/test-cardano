@@ -25,10 +25,11 @@ customRouter.get('/custom/:addr/assets', validateParams(AddressParamsSchema), as
   console.log('CUSTOM_ASSETS_URL:', env.CUSTOM_ASSETS_URL);
 
   if (!env.CUSTOM_INFO_URL || !env.CUSTOM_UTXOS_URL || !env.CUSTOM_ASSETS_URL) {
-    return res.status(501).json({ 
+    return res.status(501).json({
       error: 'Custom provider not configured',
-      suggestion: 'Please configure CUSTOM_INFO_URL, CUSTOM_UTXOS_URL, and CUSTOM_ASSETS_URL in your environment variables, or use the Koios provider instead.',
-      fallback: 'You can use the Koios provider which works out of the box without configuration.'
+      suggestion:
+        'Please configure CUSTOM_INFO_URL, CUSTOM_UTXOS_URL, and CUSTOM_ASSETS_URL in your environment variables, or use the Koios provider instead.',
+      fallback: 'You can use the Koios provider which works out of the box without configuration.',
     });
   }
 
@@ -114,7 +115,7 @@ customRouter.get('/custom/:addr/assets', validateParams(AddressParamsSchema), as
       assets,
       saved: req.user ? true : false,
     });
-  } catch (_err) {
+  } catch {
     return res.status(500).json({ error: 'Failed to fetch assets' });
   }
 });

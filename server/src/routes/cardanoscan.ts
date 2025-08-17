@@ -14,17 +14,6 @@ const AddressParamsSchema = z.object({
   addr: z.string().min(10),
 });
 
-function buildUrl(template: string | undefined, addr: string): string | null {
-  if (!template) return null;
-  return template.replace('{addr}', encodeURIComponent(addr));
-}
-
-function buildFromBase(base: string | undefined, path: string, addr: string): string | null {
-  if (!base) return null;
-  const normalized = base.replace(/\/$/, '');
-  return `${normalized}${path}`.replace('{addr}', encodeURIComponent(addr));
-}
-
 cardanoscanRouter.get(
   '/cardanoscan/:addr/assets',
   validateParams(AddressParamsSchema),
@@ -44,7 +33,7 @@ cardanoscanRouter.get(
     const infoUrl = `https://api.cardanoscan.io/api/v1/address/${encodeURIComponent(addr)}/info`;
     const utxosUrl = `https://api.cardanoscan.io/api/v1/address/${encodeURIComponent(addr)}/utxos`;
     const assetsUrl = `https://api.cardanoscan.io/api/v1/address/${encodeURIComponent(addr)}/assets`;
-    
+
     console.log('Built URLs:');
     console.log('infoUrl:', infoUrl);
     console.log('utxosUrl:', utxosUrl);
@@ -64,8 +53,10 @@ cardanoscanRouter.get(
         // Check if it's an authentication error
         if (infoRes.status === 401 || utxosRes.status === 401 || assetsRes.status === 401) {
           return res.status(401).json({
-            error: 'Cardanoscan API authentication failed. Please check your API key or use a different provider.',
-            suggestion: 'Try using the Koios provider instead, which doesn\'t require authentication.',
+            error:
+              'Cardanoscan API authentication failed. Please check your API key or use a different provider.',
+            suggestion:
+              "Try using the Koios provider instead, which doesn't require authentication.",
             statuses: {
               info: infoRes.status,
               utxos: utxosRes.status,
@@ -73,7 +64,7 @@ cardanoscanRouter.get(
             },
           });
         }
-        
+
         return res.status(502).json({
           error: 'Upstream error from Cardanoscan provider',
           statuses: {
@@ -136,7 +127,7 @@ cardanoscanRouter.get(
         assets,
         saved: req.user ? true : false,
       });
-    } catch (_err) {
+    } catch {
       return res.status(500).json({ error: 'Failed to fetch assets' });
     }
   },

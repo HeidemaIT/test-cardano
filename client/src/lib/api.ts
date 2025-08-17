@@ -2,12 +2,12 @@ import { supabase } from './supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success?: boolean;
   data?: T;
   error?: string;
   message?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 class ApiClient {
@@ -26,7 +26,7 @@ class ApiClient {
     };
   }
 
-  async get<T = any>(endpoint: string): Promise<ApiResponse<T>> {
+  async get<T = unknown>(endpoint: string): Promise<ApiResponse<T>> {
     try {
       const headers = await this.getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -46,7 +46,7 @@ class ApiClient {
     }
   }
 
-  async post<T = any>(endpoint: string, data: any): Promise<ApiResponse<T>> {
+  async post<T = unknown>(endpoint: string, data: unknown): Promise<ApiResponse<T>> {
     try {
       const headers = await this.getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -67,7 +67,7 @@ class ApiClient {
     }
   }
 
-  async delete<T = any>(endpoint: string): Promise<ApiResponse<T>> {
+  async delete<T = unknown>(endpoint: string): Promise<ApiResponse<T>> {
     try {
       const headers = await this.getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {

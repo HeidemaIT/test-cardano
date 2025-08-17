@@ -35,7 +35,7 @@ export function KoiosForm({ initialAddress }: KoiosFormProps) {
   const [showSavePrompt, setShowSavePrompt] = useState(false);
   const [lastSuccessfulAddress, setLastSuccessfulAddress] = useState<string>('');
 
-          const { savedAddresses, addAddress, removeAddress, clearAddresses, loading: addressesLoading } = useServerSavedAddresses();
+          const { savedAddresses, addAddress, removeAddress, clearAddresses } = useServerSavedAddresses();
 
   // Update address when initialAddress prop changes
   useEffect(() => {

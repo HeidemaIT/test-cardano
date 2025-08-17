@@ -15,7 +15,7 @@ export function CustomForm() {
   const [showSavePrompt, setShowSavePrompt] = useState(false);
   const [lastSuccessfulAddress, setLastSuccessfulAddress] = useState<string>('');
 
-  const { savedAddresses, addAddress, removeAddress, clearAddresses, loading: addressesLoading } = useServerSavedAddresses();
+  const { savedAddresses, addAddress, removeAddress, clearAddresses } = useServerSavedAddresses();
 
   const apiBaseUrl = useMemo(() => {
     return (import.meta as unknown as { env: { VITE_API_BASE_URL?: string } }).env

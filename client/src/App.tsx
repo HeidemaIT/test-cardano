@@ -2,7 +2,8 @@ import { useState } from 'react';
 import './App.css';
 import { AppBar, Box, Tab, Tabs, Toolbar, Typography, Button } from '@mui/material';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import Home from './pages/Home';
 import KoiosPage from './pages/KoiosPage';
@@ -36,7 +37,7 @@ function AppContent() {
   };
 
   const handleTabChange = (_e: React.SyntheticEvent, v: string) => {
-    setProvider(v as any);
+    setProvider(v as 'koios' | 'cardanoscan' | 'custom' | 'bitvavo');
     navigate(
       v === 'home' ? '/' : 
       v === 'koios' ? '/koios' : 

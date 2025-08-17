@@ -2,14 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/userService.js';
 
 // Extend Express Request interface to include user
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        email: string;
-      };
-    }
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: {
+      id: string;
+      email: string;
+    };
   }
 }
 
@@ -24,7 +22,7 @@ function validateJWT(token: string): { id: string; email: string } | null {
     // For now, we'll use a simple approach
     // In production, you should validate the JWT with Supabase's public key
     const decoded = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-    
+
     if (!decoded.sub || !decoded.email) {
       return null;
     }
@@ -43,7 +41,7 @@ export const authMiddleware: AuthMiddleware = {
   authenticate: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authHeader = req.headers.authorization;
-      
+
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return next();
       }

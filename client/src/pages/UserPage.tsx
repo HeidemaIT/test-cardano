@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { useServerSavedAddresses } from '../hooks/useServerSavedAddresses';
 import {
   Container,
@@ -38,7 +38,7 @@ export default function UserPage() {
   const navigate = useNavigate();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
-  const { savedAddresses, removeAddress, clearAddresses, loading: addressesLoading } = useServerSavedAddresses();
+  const { savedAddresses, removeAddress, clearAddresses } = useServerSavedAddresses();
 
   const handleLogout = async () => {
     await signOut();

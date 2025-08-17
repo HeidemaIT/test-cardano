@@ -51,8 +51,12 @@ async function initializeDatabase() {
     `);
 
     // Create indexes for better performance
-    await dbRun('CREATE INDEX IF NOT EXISTS idx_saved_addresses_user_id ON saved_addresses(user_id)');
-    await dbRun('CREATE INDEX IF NOT EXISTS idx_saved_addresses_address ON saved_addresses(address)');
+    await dbRun(
+      'CREATE INDEX IF NOT EXISTS idx_saved_addresses_user_id ON saved_addresses(user_id)',
+    );
+    await dbRun(
+      'CREATE INDEX IF NOT EXISTS idx_saved_addresses_address ON saved_addresses(address)',
+    );
     await dbRun('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)');
 
     console.log('Database initialized successfully');

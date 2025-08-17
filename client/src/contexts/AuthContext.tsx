@@ -1,18 +1,18 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 
 // Define types locally to avoid import issues
 interface User {
   id: string;
   email?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface Session {
   user: User;
   access_token: string;
   refresh_token: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface AuthContextType {
@@ -63,10 +63,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+

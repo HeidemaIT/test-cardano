@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../lib/api';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from './useAuth';
 
 export interface SavedAddress {
   id: number;
